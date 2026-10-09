@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>bubbles.js — Laplace &amp; surfactant (dev)</title>
+<style>
+  :root { --bg: #000; --text: #f5f5f7; --text2: #a1a1a6; --card: rgba(255,255,255,0.07); --stroke: rgba(255,255,255,0.14); --blue: #2997ff; --red: #ff453a; --green: #30d158; --yellow: #ffd60a; }
+  :root[data-theme="light"] { --bg: #fbfbfd; --text: #1d1d1f; --text2: #6e6e73; --card: rgba(0,0,0,0.05); --stroke: rgba(0,0,0,0.12); --blue: #0071e3; --red: #d70015; --green: #1f9d48; --yellow: #c9a400; }
+  html, body { margin: 0; height: 100%; background: var(--bg); color: var(--text); font-family: "SF Pro Display", "Inter", system-ui, sans-serif; overflow: hidden; }
+  #stage { position: fixed; inset: 0; }
+  .bar { position: fixed; left: 50%; bottom: 18px; transform: translateX(-50%); display: flex; gap: 8px; padding: 10px; border-radius: 16px; background: var(--card); border: 1px solid var(--stroke); backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px); z-index: 5; flex-wrap: wrap; justify-content: center; max-width: calc(100vw - 32px); }
+  button { font: 600 15px/1 inherit; font-family: inherit; color: var(--text); background: transparent; border: 1px solid var(--stroke); border-radius: 10px; padding: 10px 14px; cursor: pointer; }
+  button:hover { background: var(--card); }
+  button.on { background: var(--yellow); color: #000; border-color: transparent; }
+  .readout { position: fixed; top: 16px; left: 16px; z-index: 5; padding: 14px 16px; border-radius: 14px; background: var(--card); border: 1px solid var(--stroke); font: 600 15px/1.55 ui-monospace, "SF Mono", Menlo, Consolas, monospace; min-width: 290px; white-space: pre; backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px); }
+  .readout b { color: var(--text2); font-weight: 600; }
+  .anchor { position: fixed; z-index: 4; pointer-events: none; transform: translate(-50%, -50%); font: 600 13px/1 inherit; font-family: inherit; color: var(--text2); white-space: nowrap; }
+  .anchor::before { content: ""; display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--yellow); margin-right: 6px; vertical-align: middle; }
+  .anchor.hidden { opacity: .25; }
+</style>
+<script type="importmap">
+{ "imports": { "three": "../vendor/three/three.module.js", "three/addons/": "../vendor/three/addons/" } }
+</script>
+</head>
+<body>
+<div id="stage"></div>
+<div class="readout" id="readout">mounting…</div>
+<div class="bar">
+  <button id="bStart">start()</button>
+  <button id="bStop">stop()</button>
+  <button id="bPlay">play()</button>
+  <button id="bReset">reset()</button>
+  <button id="bSurf">surfactant: OFF</button>
+  <button id="bTheme">theme: dark</button>
+  <button id="bAnch">anchors: on</button>
+  <button id="bDispose">dispose()</button>
+  <button id="bMount">mount()</button>
+</div>
+<script type="module">
+  const { mount } = await import('../js/three/bubbles.js?v=' + Date.now());
+  const stage = document.getElementById('stage');
+  const out = document.getElementById('readout');
+  let ctl = null, theme = 'dark', surf = false, showAnchors = true;
+  const anchorEls = {};
+
+  function doMount() {
+    if (ctl) return;
+    ctl = mount(stage, { theme, surfactant: surf });
+    ctl.onState((s) => {
+      const f = (v, d = 3) => (Number.isFinite(v) ? v.toFixed(d) : String(v));
+      out.innerHTML =
+        `<b>r1</b>  ${f(s.r1)}     <b>r2</b>  ${f(s.r2)}\n` +
+        `<b>T1</b>  ${f(s.T1, 1)} dyn/cm  <b>T2</b>  ${f(s.T2, 1)} dyn/cm\n` +
+        `<b>P1</b>  ${f(s.P1, 1)}    <b>P2</b>  ${f(s.P2, 1)}   (2T/r)\n` +
+        `<b>P1</b>  ${f(s.P1cm, 1)} cmH₂O  <b>P2</b>  ${f(s.P2cm, 1)} cmH₂O\n` +
+        `<b>flowDir</b> ${s.flowDir}   <b>valveOpen</b> ${s.valveOpen}\n` +
+        `<b>collapsed</b> ${s.collapsed}   <b>phase</b> ${s.phase}`;
+    });
+    ctl.start();
+  }
+
+  function anchorsLoop() {
+    requestAnimationFrame(anchorsLoop);
+    if (!ctl || !showAnchors) { Object.values(anchorEls).forEach((e) => (e.style.display = 'none')); return; }
+    const a = ctl.getAnchors();
+    const r = stage.getBoundingClientRect();
+    for (const [k, v] of Object.entries(a)) {
+      let el = anchorEls[k];
+      if (!el) { el = anchorEls[k] = document.createElement('div'); el.className = 'anchor'; el.textContent = k; document.body.appendChild(el); }
+      el.style.display = '';
+      el.style.left = (r.left + v.x) + 'px';
+      el.style.top = (r.top + v.y) + 'px';
+      el.classList.toggle('hidden', !v.visible);
+    }
+  }
+  anchorsLoop();
+
+  const $ = (id) => document.getElementById(id);
+  $('bStart').onclick = () => ctl && ctl.start();
+  $('bStop').onclick = () => ctl && ctl.stop();
+  $('bPlay').onclick = () => ctl && ctl.play();
+  $('bReset').onclick = () => ctl && ctl.reset();
+  $('bSurf').onclick = () => {
+    surf = !surf;
+    $('bSurf').textContent = 'surfactant: ' + (surf ? 'ON' : 'OFF');
+    $('bSurf').classList.toggle('on', surf);
+    ctl && ctl.setSurfactant(surf);
+  };
+  $('bTheme').onclick = () => {
+    theme = theme === 'dark' ? 'light' : 'dark';
+    document.documentElement.dataset.theme = theme;
+    $('bTheme').textContent = 'theme: ' + theme;
+    ctl && ctl.setTheme(theme);
+  };
+  $('bAnch').onclick = () => { showAnchors = !showAnchors; $('bAnch').textContent = 'anchors: ' + (showAnchors ? 'on' : 'off'); };
+  $('bDispose').onclick = () => { if (ctl) { ctl.dispose(); ctl = null; out.textContent = 'disposed'; } };
+  $('bMount').onclick = () => doMount();
+
+  doMount();
+  window.ctl = () => ctl;
+</script>
+</body>
+</html>

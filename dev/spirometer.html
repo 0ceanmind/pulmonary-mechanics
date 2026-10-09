@@ -1,0 +1,174 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Spirometer — dev</title>
+<script type="importmap">
+{ "imports": { "three": "../vendor/three/three.module.js", "three/addons/": "../vendor/three/addons/" } }
+</script>
+<style>
+  :root {
+    --bg: #000; --text: #f5f5f7; --text2: #a1a1a6; --blue: #2997ff; --orange: #ff9f0a; --cyan: #64d2ff; --green: #30d158; --yellow: #ffd60a;
+    --panel: rgba(28, 28, 30, 0.78); --line: rgba(255, 255, 255, 0.12); --btn: rgba(255, 255, 255, 0.08); --btnOn: rgba(41, 151, 255, 0.28);
+  }
+  html[data-theme="light"] {
+    --bg: #fbfbfd; --text: #1d1d1f; --text2: #6e6e73; --blue: #0071e3; --orange: #d97a00; --cyan: #0a84c6; --green: #1f9d48; --yellow: #c9a400;
+    --panel: rgba(255, 255, 255, 0.82); --line: rgba(0, 0, 0, 0.1); --btn: rgba(0, 0, 0, 0.05); --btnOn: rgba(0, 113, 227, 0.16);
+  }
+  html, body { margin: 0; height: 100%; background: var(--bg); color: var(--text); overflow: hidden;
+    font-family: "SF Pro Display", "Inter", system-ui, sans-serif; transition: background .4s ease; }
+  #stage { position: fixed; inset: 0; }
+  #labels { position: fixed; inset: 0; pointer-events: none; }
+  .anchor { position: absolute; transform: translate(-50%, -50%); }
+  .anchor i { display: block; width: 12px; height: 12px; border-radius: 50%; background: var(--yellow); box-shadow: 0 0 0 3px rgba(0,0,0,.35); }
+  .anchor span { position: absolute; left: 14px; top: -11px; font-size: 15px; font-weight: 600; white-space: nowrap;
+    color: var(--yellow); text-shadow: 0 1px 3px rgba(0,0,0,.6); }
+  .anchor.hidden { opacity: .25; }
+  #bar { position: fixed; left: 50%; bottom: 18px; transform: translateX(-50%); display: flex; flex-wrap: wrap; gap: 6px; align-items: center;
+    padding: 8px; border-radius: 16px; background: var(--panel); border: 1px solid var(--line); backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px); max-width: calc(100vw - 32px); justify-content: center; }
+  #bar .sep { width: 1px; height: 24px; background: var(--line); margin: 0 4px; }
+  button { font: 600 14px/1 "SF Pro Display", "Inter", system-ui, sans-serif; color: var(--text); background: var(--btn);
+    border: 1px solid transparent; border-radius: 10px; padding: 9px 12px; cursor: pointer; }
+  button:hover { border-color: var(--line); }
+  button.on { background: var(--btnOn); color: var(--blue); }
+  #hud { position: fixed; top: 18px; left: 18px; font-size: 15px; line-height: 1.5; color: var(--text2); }
+  #hud b { color: var(--text); font-weight: 600; font-variant-numeric: tabular-nums; }
+  #hud .phase { display: inline-block; min-width: 46px; font-weight: 700; }
+  #chartBox { position: fixed; top: 18px; right: 18px; width: 420px; height: 210px; border-radius: 14px; background: var(--panel);
+    border: 1px solid var(--line); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); }
+  #chart { width: 100%; height: 100%; display: block; }
+  @media (max-width: 760px) { #chartBox { width: calc(100vw - 36px); height: 150px; top: auto; bottom: 150px; } }
+</style>
+</head>
+<body>
+<div id="stage"></div>
+<div id="labels"></div>
+<div id="hud">
+  <div>Lung volume <b id="vol">—</b> mL</div>
+  <div>Phase <b class="phase" id="phase">—</b> · Segment <b id="seg">—</b></div>
+  <div>t <b id="t">0.0</b> s · <b id="fps">—</b> fps</div>
+</div>
+<div id="chartBox"><canvas id="chart"></canvas></div>
+<div id="bar">
+  <button id="bStart">Start</button><button id="bStop">Stop</button>
+  <span class="sep"></span>
+  <button id="bPlay">Play</button><button id="bPause">Pause</button><button id="bReset">Reset</button>
+  <span class="sep"></span>
+  <button data-seq="full">Full</button><button data-seq="tidal">Tidal</button>
+  <span class="sep"></span>
+  <button data-speed="0.5">0.5×</button><button data-speed="1">1×</button><button data-speed="2">2×</button><button data-speed="4">4×</button>
+  <span class="sep"></span>
+  <button id="bLoop">Loop</button><button id="bAnchors">Anchors</button><button id="bTheme">Light</button><button id="bRemount">Remount</button>
+</div>
+
+<script type="module">
+  import { mount, VOLUMES } from '../js/three/spirometer.js';
+
+  const $ = (s) => document.querySelector(s);
+  const stage = $('#stage');
+  let theme = 'dark', seqName = 'full', speed = 1, loop = false, showAnchors = true;
+  let ctl, unsub;
+
+  /* -------- live 2D chart fed by onSample */
+  const chart = $('#chart'), cx = chart.getContext('2d');
+  let pts = [];
+  const css = (v) => getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+  function drawChart() {
+    const dpr = Math.min(devicePixelRatio, 2), w = chart.clientWidth, h = chart.clientHeight;
+    if (chart.width !== w * dpr) { chart.width = w * dpr; chart.height = h * dpr; }
+    cx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    cx.clearRect(0, 0, w, h);
+    const pad = { l: 44, r: 12, t: 14, b: 22 };
+    const st = ctl ? ctl.getState() : { duration: 26 };
+    const tNow = pts.length ? pts[pts.length - 1].t : 0;
+    const span = isFinite(st.duration) ? st.duration : 20;
+    const t0 = isFinite(st.duration) ? 0 : Math.max(0, tNow - span);
+    const X = (t) => pad.l + ((t - t0) / span) * (w - pad.l - pad.r);
+    const Y = (v) => pad.t + (1 - v / 6200) * (h - pad.t - pad.b);
+    cx.font = '600 11px "SF Pro Display", Inter, system-ui, sans-serif';
+    cx.textAlign = 'right'; cx.textBaseline = 'middle';
+    for (const [k, v] of [['TLC', VOLUMES.TLC], ['FRC', VOLUMES.FRC], ['RV', VOLUMES.RV]]) {
+      cx.strokeStyle = css('--line'); cx.lineWidth = 1.5; cx.setLineDash([4, 4]);
+      cx.beginPath(); cx.moveTo(pad.l, Y(v)); cx.lineTo(w - pad.r, Y(v)); cx.stroke();
+      cx.setLineDash([]); cx.fillStyle = css('--text2'); cx.fillText(k, pad.l - 6, Y(v));
+    }
+    cx.strokeStyle = css('--blue'); cx.lineWidth = 3; cx.lineJoin = 'round'; cx.lineCap = 'round';
+    cx.beginPath();
+    let first = true;
+    for (const p of pts) { if (p.t < t0) continue; const x = X(p.t), y = Y(p.lungVolume); first ? cx.moveTo(x, y) : cx.lineTo(x, y); first = false; }
+    cx.stroke();
+  }
+
+  /* -------- anchors overlay */
+  const labels = $('#labels');
+  const anchorEls = {};
+  function drawAnchors() {
+    if (!ctl || !showAnchors) { labels.style.display = 'none'; return; }
+    labels.style.display = '';
+    const a = ctl.getAnchors();
+    for (const [k, p] of Object.entries(a)) {
+      let el = anchorEls[k];
+      if (!el) { el = anchorEls[k] = document.createElement('div'); el.className = 'anchor'; el.innerHTML = `<i></i><span>${k}</span>`; labels.appendChild(el); }
+      el.style.left = p.x + 'px'; el.style.top = p.y + 'px';
+      el.classList.toggle('hidden', !p.visible);
+    }
+  }
+
+  /* -------- mount / wiring */
+  function create() {
+    ctl = mount(stage, { theme, sequence: seqName, speed, loop });
+    pts = [];
+    unsub = ctl.onSample((s) => {
+      if (pts.length && s.t < pts[pts.length - 1].t) pts = [];
+      pts.push(s);
+      if (pts.length > 4000) pts.splice(0, pts.length - 4000);
+      $('#vol').textContent = Math.round(s.lungVolume);
+      const ph = $('#phase'); ph.textContent = s.phase;
+      ph.style.color = s.phase === 'insp' ? css('--blue') : s.phase === 'exp' ? css('--orange') : css('--text');
+      $('#seg').textContent = s.segment;
+      $('#t').textContent = s.t.toFixed(1);
+    });
+    ctl.start();
+    syncButtons();
+  }
+  function syncButtons() {
+    document.querySelectorAll('[data-seq]').forEach((b) => b.classList.toggle('on', b.dataset.seq === seqName));
+    document.querySelectorAll('[data-speed]').forEach((b) => b.classList.toggle('on', Number(b.dataset.speed) === speed));
+    $('#bLoop').classList.toggle('on', loop);
+    $('#bAnchors').classList.toggle('on', showAnchors);
+    $('#bTheme').textContent = theme === 'dark' ? 'Light' : 'Dark';
+  }
+  $('#bStart').onclick = () => ctl.start();
+  $('#bStop').onclick = () => ctl.stop();
+  $('#bPlay').onclick = () => ctl.play();
+  $('#bPause').onclick = () => ctl.pause();
+  $('#bReset').onclick = () => { ctl.reset(); pts = []; };
+  document.querySelectorAll('[data-seq]').forEach((b) => b.onclick = () => { seqName = b.dataset.seq; ctl.setSequence(seqName); pts = []; syncButtons(); });
+  document.querySelectorAll('[data-speed]').forEach((b) => b.onclick = () => { speed = Number(b.dataset.speed); ctl.setSpeed(speed); syncButtons(); });
+  $('#bLoop').onclick = () => { loop = !loop; ctl.setLoop(loop); syncButtons(); };
+  $('#bAnchors').onclick = () => { showAnchors = !showAnchors; syncButtons(); };
+  $('#bTheme').onclick = () => {
+    theme = theme === 'dark' ? 'light' : 'dark';
+    document.documentElement.dataset.theme = theme;
+    ctl.setTheme(theme);
+    syncButtons();
+  };
+  $('#bRemount').onclick = () => { unsub && unsub(); ctl.dispose(); create(); };
+
+  // page loop (overlay + chart + fps)
+  let last = performance.now(), frames = 0, acc = 0;
+  (function tick(now) {
+    requestAnimationFrame(tick);
+    frames++; acc += now - last; last = now;
+    if (acc > 500) { $('#fps').textContent = Math.round((frames * 1000) / acc); frames = 0; acc = 0; }
+    drawAnchors();
+    drawChart();
+  })(performance.now());
+
+  window.spiro = () => ctl; // debugging handle
+  create();
+</script>
+</body>
+</html>

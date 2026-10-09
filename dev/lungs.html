@@ -1,0 +1,190 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lungs — dev</title>
+<script type="importmap">
+{ "imports": { "three": "../vendor/three/three.module.js", "three/addons/": "../vendor/three/addons/" } }
+</script>
+<style>
+  :root {
+    --bg: #000; --text: #f5f5f7; --text2: #a1a1a6; --blue: #2997ff; --cyan: #64d2ff; --green: #30d158; --pink: #ff375f;
+    --orange: #ff9f0a; --purple: #bf5af2; --yellow: #ffd60a; --red: #ff453a; --tissue: #ff8fa3;
+    --panel: rgba(28, 28, 30, 0.78); --line: rgba(255, 255, 255, 0.12); --btn: rgba(255, 255, 255, 0.08); --btnOn: rgba(41, 151, 255, 0.28);
+  }
+  html[data-theme="light"] {
+    --bg: #fbfbfd; --text: #1d1d1f; --text2: #6e6e73; --blue: #0071e3; --cyan: #0a84c6; --green: #1f9d48; --pink: #e0254e;
+    --orange: #d97a00; --purple: #9b3fd1; --yellow: #c9a400; --red: #d70015; --tissue: #e8657d;
+    --panel: rgba(255, 255, 255, 0.82); --line: rgba(0, 0, 0, 0.1); --btn: rgba(0, 0, 0, 0.05); --btnOn: rgba(0, 113, 227, 0.16);
+  }
+  html, body { margin: 0; height: 100%; background: var(--bg); color: var(--text); overflow: hidden;
+    font-family: "SF Pro Display", "Inter", system-ui, sans-serif; transition: background .4s ease; }
+  #stage { position: fixed; inset: 0; }
+  #labels { position: fixed; inset: 0; pointer-events: none; }
+  .anchor { position: absolute; left: 0; top: 0; will-change: transform; }
+  .anchor i { position: absolute; left: -6px; top: -6px; width: 12px; height: 12px; border-radius: 50%; background: var(--yellow);
+    box-shadow: 0 0 0 3px rgba(0,0,0,.35); }
+  .anchor span { position: absolute; left: 12px; top: -11px; font-size: 15px; font-weight: 600; white-space: nowrap;
+    color: var(--yellow); text-shadow: 0 1px 3px rgba(0,0,0,.6); }
+  .anchor.hidden { opacity: .22; }
+  #bar { position: fixed; left: 50%; bottom: 14px; transform: translateX(-50%); display: flex; flex-wrap: wrap; gap: 6px; align-items: center;
+    padding: 8px; border-radius: 16px; background: var(--panel); border: 1px solid var(--line); backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px); width: max-content; max-width: calc(100vw - 32px); justify-content: center; box-sizing: border-box; }
+  #bar .sep { width: 1px; height: 24px; background: var(--line); margin: 0 3px; }
+  #bar label { font: 600 13px/1 "SF Pro Display", "Inter", system-ui, sans-serif; color: var(--text2); display: flex; align-items: center; gap: 6px; }
+  button { font: 600 14px/1 "SF Pro Display", "Inter", system-ui, sans-serif; color: var(--text); background: var(--btn);
+    border: 1px solid transparent; border-radius: 10px; padding: 9px 11px; cursor: pointer; }
+  button:hover { border-color: var(--line); }
+  button.on { background: var(--btnOn); color: var(--blue); }
+  input[type=range] { width: 130px; accent-color: var(--blue); }
+  input[type=number] { width: 46px; font: 600 13px/1 system-ui; padding: 6px; border-radius: 8px; border: 1px solid var(--line); background: var(--btn); color: var(--text); }
+  #hud { position: fixed; top: 18px; left: 18px; font-size: 15px; line-height: 1.6; color: var(--text2); }
+  #hud b { color: var(--text); font-weight: 600; font-variant-numeric: tabular-nums; }
+  #hud .phase { display: inline-block; min-width: 40px; font-weight: 700; }
+  #curve { position: fixed; top: 18px; right: 18px; width: 340px; height: 120px; border-radius: 14px; background: var(--panel); border: 1px solid var(--line); }
+</style>
+</head>
+<body>
+<div id="stage"></div>
+<div id="labels"></div>
+<div id="hud">
+  <div>Mode <b id="mode">—</b> · <b id="fps">—</b> fps</div>
+  <div>t <b id="t">0.00</b> s · phase <b class="phase" id="phase">—</b></div>
+  <div>volume <b id="vol">0.00</b></div>
+</div>
+<canvas id="curve"></canvas>
+<div id="bar">
+  <button data-mode="hero">Hero</button><button data-mode="thorax">Thorax</button>
+  <span class="sep"></span>
+  <button id="bStart">Start</button><button id="bStop">Stop</button>
+  <span class="sep"></span>
+  <button id="bAuto" class="on">Auto breath</button>
+  <label>T <input id="period" type="number" min="1" max="12" step="0.5" value="4"></label>
+  <label>V <input id="vslider" type="range" min="0" max="1.8" step="0.01" value="0"></label>
+  <button id="bDeep">Deep breath</button>
+  <button id="bAir">Airflow</button>
+  <span class="sep"></span>
+  <button data-dis="normal" class="on">Normal</button><button data-dis="fibrosis">Fibrosis</button><button data-dis="emphysema">Emphysema</button>
+  <span class="sep"></span>
+  <button data-hl="">None</button><button data-hl="pao">Pao</button><button data-hl="ppl">Ppl</button><button data-hl="pa">PA</button><button data-hl="pbs">Pbs</button>
+  <span class="sep"></span>
+  <button id="bPtx">Pneumothorax</button>
+  <button id="bAnch" class="on">Anchors</button>
+  <button id="bTheme">Light</button>
+  <button id="bDispose">Dispose</button><button id="bRemount">Remount</button>
+</div>
+
+<script type="module">
+  import { mount } from '../js/three/lungs.js';
+
+  const $ = (s) => document.querySelector(s);
+  const $$ = (s) => [...document.querySelectorAll(s)];
+  const stage = $('#stage'), labels = $('#labels');
+  const qs = new URLSearchParams(location.search);
+  let mode = qs.get('mode') === 'thorax' ? 'thorax' : 'hero';
+  let theme = qs.get('theme') === 'light' ? 'light' : 'dark';
+  let auto = true, airflow = false, disease = 'normal', hl = null, ptx = false, showAnchors = true;
+  let ctl = null, unsub = null;
+  const hist = [];
+
+  const NAMES = { pao: 'Pao · airway opening', ppl: 'Ppl · pleural space', pa: 'PA · alveoli', pbs: 'Pbs · body surface',
+    trachea: 'trachea', leftLung: 'left lung', rightLung: 'right lung', diaphragm: 'diaphragm' };
+  const anchorEls = {};
+  for (const k of Object.keys(NAMES)) {
+    const d = document.createElement('div'); d.className = 'anchor'; d.innerHTML = `<i></i><span>${NAMES[k]}</span>`;
+    labels.appendChild(d); anchorEls[k] = d;
+  }
+
+  function create() {
+    ctl = mount(stage, { mode, autoRotate: true, interactive: true, theme });
+    ctl.setTheme(theme);
+    ctl.setAutoBreath(auto, +$('#period').value || 4);
+    ctl.setAirflow(airflow);
+    if (disease !== 'normal') ctl.setDisease(disease);
+    ctl.highlight(hl);
+    if (ptx) ctl.setPneumothorax(true);
+    unsub = ctl.onBreath(({ t, phase, volume }) => {
+      $('#t').textContent = t.toFixed(2);
+      $('#phase').textContent = phase;
+      $('#phase').style.color = phase === 'insp' ? 'var(--blue)' : 'var(--orange)';
+      $('#vol').textContent = volume.toFixed(2);
+      if (auto) $('#vslider').value = volume;
+      hist.push(volume); if (hist.length > 300) hist.shift();
+    });
+    ctl.start();
+    $('#mode').textContent = mode;
+    syncButtons();
+  }
+
+  function syncButtons() {
+    $$('[data-mode]').forEach((b) => b.classList.toggle('on', b.dataset.mode === mode));
+    $$('[data-dis]').forEach((b) => b.classList.toggle('on', b.dataset.dis === disease));
+    $$('[data-hl]').forEach((b) => b.classList.toggle('on', (b.dataset.hl || null) === hl));
+    $('#bAuto').classList.toggle('on', auto);
+    $('#bAir').classList.toggle('on', airflow);
+    $('#bPtx').classList.toggle('on', ptx);
+    $('#bAnch').classList.toggle('on', showAnchors);
+    $('#bTheme').textContent = theme === 'dark' ? 'Light' : 'Dark';
+    document.documentElement.dataset.theme = theme;
+  }
+
+  $$('[data-mode]').forEach((b) => b.onclick = () => {
+    mode = b.dataset.mode;
+    const u = new URL(location.href); u.searchParams.set('mode', mode); history.replaceState(null, '', u);
+    if (ctl) { unsub && unsub(); ctl.dispose(); }
+    create();
+  });
+  $('#bStart').onclick = () => ctl && ctl.start();
+  $('#bStop').onclick = () => ctl && ctl.stop();
+  $('#bAuto').onclick = () => { auto = !auto; ctl.setAutoBreath(auto, +$('#period').value || 4); syncButtons(); };
+  $('#period').onchange = () => { if (auto) ctl.setAutoBreath(true, +$('#period').value || 4); };
+  $('#vslider').oninput = (e) => { if (auto) { auto = false; ctl.setAutoBreath(false); syncButtons(); } ctl.setVolume(+e.target.value); };
+  $('#bDeep').onclick = () => {
+    auto = false; ctl.setAutoBreath(false); syncButtons();
+    const t0 = performance.now(), v0 = +$('#vslider').value;
+    const step = () => {
+      const t = (performance.now() - t0) / 1000;
+      const v = t < 2.2 ? v0 + (1.8 - v0) * (0.5 - 0.5 * Math.cos(Math.PI * t / 2.2)) : 1.8 * (0.5 + 0.5 * Math.cos(Math.PI * Math.min((t - 2.2) / 2.8, 1)));
+      ctl.setVolume(v); $('#vslider').value = v;
+      if (t < 5 && !auto) requestAnimationFrame(step);
+    };
+    step();
+  };
+  $('#bAir').onclick = () => { airflow = !airflow; ctl.setAirflow(airflow); syncButtons(); };
+  $$('[data-dis]').forEach((b) => b.onclick = () => { disease = b.dataset.dis; ctl.setDisease(disease); syncButtons(); });
+  $$('[data-hl]').forEach((b) => b.onclick = () => { hl = b.dataset.hl || null; ctl.highlight(hl); syncButtons(); });
+  $('#bPtx').onclick = () => { ptx = !ptx; ctl.setPneumothorax(ptx); syncButtons(); };
+  $('#bAnch').onclick = () => { showAnchors = !showAnchors; labels.style.display = showAnchors ? '' : 'none'; syncButtons(); };
+  $('#bTheme').onclick = () => { theme = theme === 'dark' ? 'light' : 'dark'; ctl.setTheme(theme); syncButtons(); };
+  $('#bDispose').onclick = () => { if (ctl) { unsub && unsub(); ctl.dispose(); ctl = null; } };
+  $('#bRemount').onclick = () => { if (ctl) { unsub && unsub(); ctl.dispose(); } create(); };
+
+  // anchors + fps + volume curve
+  const cv = $('#curve'), cx = cv.getContext('2d');
+  let frames = 0, last = performance.now();
+  function tick() {
+    requestAnimationFrame(tick);
+    frames++;
+    const now = performance.now();
+    if (now - last > 500) { $('#fps').textContent = Math.round(frames * 1000 / (now - last)); frames = 0; last = now; }
+    if (ctl && showAnchors) {
+      const a = ctl.getAnchors();
+      for (const [k, el] of Object.entries(anchorEls)) {
+        const p = a[k]; if (!p) continue;
+        el.style.transform = `translate(${p.x}px, ${p.y}px)`;
+        el.classList.toggle('hidden', !p.visible);
+      }
+    }
+    const dpr = Math.min(devicePixelRatio, 2), w = cv.clientWidth, h = cv.clientHeight;
+    if (cv.width !== w * dpr) { cv.width = w * dpr; cv.height = h * dpr; }
+    cx.setTransform(dpr, 0, 0, dpr, 0, 0); cx.clearRect(0, 0, w, h);
+    cx.strokeStyle = getComputedStyle(document.documentElement).getPropertyValue('--cyan'); cx.lineWidth = 3; cx.beginPath();
+    hist.forEach((v, i) => { const x = 10 + (i / 299) * (w - 20), y = h - 12 - (v / 1.8) * (h - 24); i ? cx.lineTo(x, y) : cx.moveTo(x, y); });
+    cx.stroke();
+  }
+  tick();
+  create();
+</script>
+</body>
+</html>

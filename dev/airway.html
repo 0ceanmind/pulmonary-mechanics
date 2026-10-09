@@ -1,0 +1,201 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Airway module — dev</title>
+<style>
+  :root {
+    --bg: #000; --text: #f5f5f7; --text2: #a1a1a6; --panel: rgba(28, 28, 30, 0.82); --line: rgba(255, 255, 255, 0.12);
+    --blue: #2997ff; --chip: rgba(255, 255, 255, 0.08); --chipOn: #2997ff;
+  }
+  body.light {
+    --bg: #fbfbfd; --text: #1d1d1f; --text2: #6e6e73; --panel: rgba(255, 255, 255, 0.88); --line: rgba(0, 0, 0, 0.1);
+    --blue: #0071e3; --chip: rgba(0, 0, 0, 0.06); --chipOn: #0071e3;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; overflow: hidden; background: var(--bg); color: var(--text);
+    font-family: "SF Pro Display", "Inter", system-ui, sans-serif; transition: background 0.3s; }
+  #stage { position: fixed; left: 0; right: 0; top: 0; bottom: 132px; }
+  #anchors { position: fixed; left: 0; right: 0; top: 0; bottom: 132px; pointer-events: none; }
+  .anc { position: absolute; transform: translate(-50%, -50%); pointer-events: none; }
+  .anc i { display: block; width: 12px; height: 12px; border-radius: 50%; border: 2px solid var(--text); background: rgba(255, 214, 10, 0.9); }
+  .anc span { position: absolute; left: 14px; top: -10px; font-size: 15px; font-weight: 600; white-space: nowrap;
+    color: var(--text); text-shadow: 0 1px 3px rgba(0,0,0,0.5); }
+  body.light .anc span { text-shadow: 0 1px 2px rgba(255,255,255,0.8); }
+  .anc.hidden { opacity: 0.25; }
+  #bar { position: fixed; left: 0; right: 0; bottom: 0; height: 132px; padding: 12px 18px; background: var(--panel);
+    border-top: 1px solid var(--line); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+    display: grid; grid-template-columns: auto 1fr auto; gap: 10px 22px; align-items: center; font-size: 14px; }
+  .row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+  button { font: inherit; font-weight: 600; color: var(--text); background: var(--chip); border: 1px solid var(--line);
+    border-radius: 999px; padding: 7px 14px; cursor: pointer; }
+  button.on { background: var(--chipOn); color: #fff; border-color: transparent; }
+  label { display: inline-flex; gap: 8px; align-items: center; color: var(--text2); font-weight: 600; }
+  label output { color: var(--text); min-width: 3.2em; font-variant-numeric: tabular-nums; }
+  input[type=range] { width: 180px; accent-color: var(--blue); }
+  #state { font: 12px/1.4 ui-monospace, SFMono-Regular, Menlo, monospace; color: var(--text2); white-space: pre; max-width: 360px; overflow: hidden; }
+  #fps { font: 12px ui-monospace, monospace; color: var(--text2); }
+  .panel { display: none; }
+  .panel.on { display: flex; }
+</style>
+<script type="importmap">
+{ "imports": { "three": "../vendor/three/three.module.js", "three/addons/": "../vendor/three/addons/" } }
+</script>
+</head>
+<body>
+<div id="stage"></div>
+<div id="anchors"></div>
+<div id="bar">
+  <div class="row" id="modes">
+    <button data-mode="poiseuille">Poiseuille</button>
+    <button data-mode="bronchomotor">Bronchomotor</button>
+    <button data-mode="traction">Traction</button>
+    <button data-mode="turbulence">Turbulence</button>
+  </div>
+
+  <div>
+    <div class="row panel" data-panel="poiseuille">
+      <label>radius r <input id="pr" type="range" min="0.4" max="1" step="0.01" value="1"><output id="pro">1.00</output></label>
+      <label>length L <input id="pl" type="range" min="0.5" max="1.5" step="0.01" value="1"><output id="plo">1.00</output></label>
+      <label>viscosity η <input id="pe" type="range" min="1" max="3" step="0.01" value="1"><output id="peo">1.00</output></label>
+      <button id="pHalf">r = ½</button>
+      <button id="pReset">Reset</button>
+    </div>
+    <div class="row panel" data-panel="bronchomotor">
+      <label>tone <input id="bt" type="range" min="-1" max="1" step="0.01" value="0"><output id="bto">0.00</output></label>
+      <button data-tone="-1">Dilate (β₂ / NO)</button>
+      <button data-tone="0">Baseline</button>
+      <button data-tone="1">Constrict (M3 / histamine)</button>
+    </div>
+    <div class="row panel" data-panel="traction">
+      <label>lung volume v <input id="tv" type="range" min="0" max="1" step="0.01" value="0.5"><output id="tvo">0.50</output></label>
+      <label>recoil k <input id="tk" type="range" min="0" max="1" step="0.01" value="1"><output id="tko">1.00</output></label>
+      <button data-tv="0">RV</button>
+      <button data-tv="0.5">FRC</button>
+      <button data-tv="1">TLC</button>
+      <button id="tEmph">Emphysema (k = 0.15)</button>
+      <button id="tNorm">Normal (k = 1)</button>
+    </div>
+    <div class="row panel" data-panel="turbulence">
+      <button data-regime="laminar">Laminar</button>
+      <button data-regime="transitional">Transitional</button>
+      <button data-regime="turbulent">Turbulent</button>
+      <span style="width:16px"></span>
+      <button data-gas="air">Air</button>
+      <button data-gas="heliox">Heliox</button>
+    </div>
+    <div class="row" style="margin-top:8px">
+      <div id="state"></div>
+    </div>
+  </div>
+
+  <div class="row" style="justify-content:flex-end">
+    <button id="theme">Light theme</button>
+    <button id="run">Stop</button>
+    <button id="anc">Anchors</button>
+    <button id="remount">Remount</button>
+    <span id="fps"></span>
+  </div>
+</div>
+
+<script type="module">
+import { mount } from '../js/three/airway.js';
+
+const $ = (s) => document.querySelector(s);
+const stage = $('#stage');
+const params = new URLSearchParams(location.search);
+let mode = params.get('mode') || 'poiseuille';
+let theme = params.get('theme') === 'light' ? 'light' : 'dark';
+let showAnchors = params.get('anchors') === '1';
+let ctl = null, running = true;
+
+function syncTheme() {
+  document.body.classList.toggle('light', theme === 'light');
+  $('#theme').textContent = theme === 'light' ? 'Dark theme' : 'Light theme';
+}
+
+function syncUrl() {
+  const p = new URLSearchParams({ mode, theme });
+  if (showAnchors) p.set('anchors', '1');
+  history.replaceState(null, '', '?' + p.toString());
+}
+
+function doMount() {
+  if (ctl) ctl.dispose();
+  const t0 = performance.now();
+  ctl = mount(stage, { mode, theme });
+  console.log(`[airway] mounted ${mode} in ${(performance.now() - t0).toFixed(0)} ms`);
+  window.ctl = ctl;
+  document.querySelectorAll('#modes button').forEach((b) => b.classList.toggle('on', b.dataset.mode === mode));
+  document.querySelectorAll('.panel').forEach((p) => p.classList.toggle('on', p.dataset.panel === mode));
+  // reset controls
+  for (const [id, v] of [['#pr', 1], ['#pl', 1], ['#pe', 1], ['#bt', 0], ['#tv', 0.5], ['#tk', 1]]) { $(id).value = v; $(id).dispatchEvent(new Event('input')); }
+  if (mode === 'turbulence') { markRegime('laminar'); markGas('air'); }
+  if (running) ctl.start();
+  syncUrl();
+}
+
+const bind = (id, out, fn) => {
+  $(id).addEventListener('input', (e) => {
+    const v = +e.target.value;
+    $(out).textContent = v.toFixed(2);
+    if (ctl && ctl[fn]) ctl[fn](v);
+  });
+};
+bind('#pr', '#pro', 'setRadius');
+bind('#pl', '#plo', 'setLength');
+bind('#pe', '#peo', 'setViscosity');
+bind('#bt', '#bto', 'setTone');
+bind('#tv', '#tvo', 'setLungVolume');
+bind('#tk', '#tko', 'setRecoil');
+
+const setSlider = (id, v) => { $(id).value = v; $(id).dispatchEvent(new Event('input')); };
+$('#pHalf').onclick = () => setSlider('#pr', 0.5);
+$('#pReset').onclick = () => { setSlider('#pr', 1); setSlider('#pl', 1); setSlider('#pe', 1); };
+document.querySelectorAll('[data-tone]').forEach((b) => b.onclick = () => setSlider('#bt', +b.dataset.tone));
+document.querySelectorAll('[data-tv]').forEach((b) => b.onclick = () => setSlider('#tv', +b.dataset.tv));
+$('#tEmph').onclick = () => setSlider('#tk', 0.15);
+$('#tNorm').onclick = () => setSlider('#tk', 1);
+
+function markRegime(r) { document.querySelectorAll('[data-regime]').forEach((b) => b.classList.toggle('on', b.dataset.regime === r)); }
+function markGas(g) { document.querySelectorAll('[data-gas]').forEach((b) => b.classList.toggle('on', b.dataset.gas === g)); }
+document.querySelectorAll('[data-regime]').forEach((b) => b.onclick = () => { ctl.setRegime(b.dataset.regime); markRegime(b.dataset.regime); });
+document.querySelectorAll('[data-gas]').forEach((b) => b.onclick = () => { ctl.setGas(b.dataset.gas); markGas(b.dataset.gas); });
+
+document.querySelectorAll('#modes button').forEach((b) => b.onclick = () => { mode = b.dataset.mode; doMount(); });
+$('#theme').onclick = () => { theme = theme === 'dark' ? 'light' : 'dark'; syncTheme(); ctl.setTheme(theme); syncUrl(); };
+$('#run').onclick = () => { running = !running; running ? ctl.start() : ctl.stop(); $('#run').textContent = running ? 'Stop' : 'Start'; };
+$('#anc').onclick = () => { showAnchors = !showAnchors; $('#anc').classList.toggle('on', showAnchors); if (!showAnchors) $('#anchors').innerHTML = ''; syncUrl(); };
+$('#remount').onclick = () => doMount();
+$('#anc').classList.toggle('on', showAnchors);
+
+// HUD loop: state readout, anchors, fps
+let frames = 0, last = performance.now();
+function hud() {
+  requestAnimationFrame(hud);
+  frames++;
+  const now = performance.now();
+  if (now - last > 500) { $('#fps').textContent = `${Math.round(frames * 1000 / (now - last))} fps`; frames = 0; last = now; }
+  if (!ctl) return;
+  const s = ctl.getState ? ctl.getState() : {};
+  $('#state').textContent = JSON.stringify(s, (k, v) => typeof v === 'number' ? +v.toFixed(3) : v);
+  if (showAnchors) {
+    const a = ctl.getAnchors();
+    const host = $('#anchors');
+    for (const name of Object.keys(a)) {
+      let el = host.querySelector(`[data-a="${name}"]`);
+      if (!el) { el = document.createElement('div'); el.className = 'anc'; el.dataset.a = name; el.innerHTML = `<i></i><span>${name}</span>`; host.appendChild(el); }
+      el.style.left = a[name].x + 'px'; el.style.top = a[name].y + 'px';
+      el.classList.toggle('hidden', !a[name].visible);
+    }
+    host.querySelectorAll('.anc').forEach((el) => { if (!(el.dataset.a in a)) el.remove(); });
+  }
+}
+
+syncTheme();
+doMount();
+hud();
+</script>
+</body>
+</html>

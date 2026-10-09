@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>boyle.js — Boyle's law (dev)</title>
+<style>
+  :root { --bg: #000; --text: #f5f5f7; --text2: #a1a1a6; --card: rgba(255,255,255,0.07); --stroke: rgba(255,255,255,0.14); --cyan: #64d2ff; --pink: #ff375f; --yellow: #ffd60a; }
+  :root[data-theme="light"] { --bg: #fbfbfd; --text: #1d1d1f; --text2: #6e6e73; --card: rgba(0,0,0,0.05); --stroke: rgba(0,0,0,0.12); --cyan: #0a84c6; --pink: #e0254e; --yellow: #c9a400; }
+  html, body { margin: 0; height: 100%; background: var(--bg); color: var(--text); font-family: "SF Pro Display", "Inter", system-ui, sans-serif; overflow: hidden; }
+  #stage { position: fixed; inset: 0; }
+  .bar { position: fixed; right: 16px; top: 50%; transform: translateY(-50%); display: flex; flex-direction: column; gap: 8px; padding: 10px; border-radius: 16px; background: var(--card); border: 1px solid var(--stroke); backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px); z-index: 5; align-items: stretch; max-height: calc(100vh - 32px); overflow: auto; }
+  @media (max-width: 700px) { .bar { top: auto; bottom: 12px; right: 50%; transform: translateX(50%); flex-direction: row; flex-wrap: wrap; justify-content: center; max-width: calc(100vw - 32px); } }
+  button { font: 600 15px/1 inherit; font-family: inherit; color: var(--text); background: transparent; border: 1px solid var(--stroke); border-radius: 10px; padding: 10px 14px; cursor: pointer; }
+  button:hover { background: var(--card); }
+  input[type=range] { width: 180px; accent-color: var(--cyan); }
+  .readout { position: fixed; top: 16px; left: 16px; z-index: 5; padding: 14px 18px; border-radius: 14px; background: var(--card); border: 1px solid var(--stroke); font: 600 22px/1.5 ui-monospace, "SF Mono", Menlo, Consolas, monospace; backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px); }
+  .readout .v { color: var(--cyan); } .readout .p { color: var(--pink); } .readout .k { color: var(--text2); }
+  .anchor { position: fixed; z-index: 4; pointer-events: none; transform: translate(-50%, -50%); font: 600 13px/1 inherit; font-family: inherit; color: var(--text2); white-space: nowrap; }
+  .anchor::before { content: ""; display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--yellow); margin-right: 6px; vertical-align: middle; }
+  .anchor.hidden { opacity: .25; }
+</style>
+<script type="importmap">
+{ "imports": { "three": "../vendor/three/three.module.js", "three/addons/": "../vendor/three/addons/" } }
+</script>
+</head>
+<body>
+<div id="stage"></div>
+<div class="readout" id="readout">mounting…</div>
+<div class="bar">
+  <button id="bStart">start()</button>
+  <button id="bStop">stop()</button>
+  <button data-v="1">V = 1.0</button>
+  <button data-v="0.75">V = 0.75</button>
+  <button data-v="0.5">V = 0.5</button>
+  <button data-v="0.35">V = 0.35</button>
+  <input id="slider" type="range" min="0.35" max="1" step="0.01" value="1" title="setVolume(v)">
+  <button id="bTheme">theme: dark</button>
+  <button id="bAnch">anchors: on</button>
+  <button id="bDispose">dispose()</button>
+  <button id="bMount">mount()</button>
+</div>
+<script type="module">
+  const { mount } = await import('../js/three/boyle.js?v=' + Date.now());
+  const stage = document.getElementById('stage');
+  const out = document.getElementById('readout');
+  const slider = document.getElementById('slider');
+  let ctl = null, theme = 'dark', showAnchors = true;
+  const anchorEls = {};
+
+  function doMount() {
+    if (ctl) return;
+    ctl = mount(stage, { theme });
+    ctl.onState(({ V, P }) => {
+      out.innerHTML = `<span class="k">V</span> <span class="v">${V.toFixed(3)}</span>   ` +
+        `<span class="k">P</span> <span class="p">${P.toFixed(3)}</span>   ` +
+        `<span class="k">P·V</span> ${(P * V).toFixed(3)}`;
+    });
+    ctl.start();
+  }
+
+  function anchorsLoop() {
+    requestAnimationFrame(anchorsLoop);
+    if (!ctl || !showAnchors) { Object.values(anchorEls).forEach((e) => (e.style.display = 'none')); return; }
+    const a = ctl.getAnchors();
+    const r = stage.getBoundingClientRect();
+    for (const [k, v] of Object.entries(a)) {
+      let el = anchorEls[k];
+      if (!el) { el = anchorEls[k] = document.createElement('div'); el.className = 'anchor'; el.textContent = k; document.body.appendChild(el); }
+      el.style.display = '';
+      el.style.left = (r.left + v.x) + 'px';
+      el.style.top = (r.top + v.y) + 'px';
+      el.classList.toggle('hidden', !v.visible);
+    }
+  }
+  anchorsLoop();
+
+  const $ = (id) => document.getElementById(id);
+  $('bStart').onclick = () => ctl && ctl.start();
+  $('bStop').onclick = () => ctl && ctl.stop();
+  document.querySelectorAll('[data-v]').forEach((b) => (b.onclick = () => { slider.value = b.dataset.v; ctl && ctl.setVolume(+b.dataset.v); }));
+  slider.oninput = () => ctl && ctl.setVolume(+slider.value);
+  $('bTheme').onclick = () => {
+    theme = theme === 'dark' ? 'light' : 'dark';
+    document.documentElement.dataset.theme = theme;
+    $('bTheme').textContent = 'theme: ' + theme;
+    ctl && ctl.setTheme(theme);
+  };
+  $('bAnch').onclick = () => { showAnchors = !showAnchors; $('bAnch').textContent = 'anchors: ' + (showAnchors ? 'on' : 'off'); };
+  $('bDispose').onclick = () => { if (ctl) { ctl.dispose(); ctl = null; out.textContent = 'disposed'; } };
+  $('bMount').onclick = () => doMount();
+
+  doMount();
+  window.ctl = () => ctl;
+</script>
+</body>
+</html>

@@ -1,0 +1,840 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pulmonary Mechanics</title>
+<meta name="description" content="An interactive, 3D lecture on pulmonary mechanics — pressures, compliance, surfactant, lung volumes, airway resistance and spirometry (Guyton & Hall, 15th ed., pp. 501–507).">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23000'/%3E%3Cpath d='M32 10v18M32 28c-4 4-10 4-13 12-3 9 0 15 6 15 5 0 7-6 7-12M32 28c4 4 10 4 13 12 3 9 0 15-6 15-5 0-7-6-7-12' fill='none' stroke='%232997ff' stroke-width='4' stroke-linecap='round'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300..800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/deck.css">
+<link rel="stylesheet" href="css/slides.css">
+<script type="importmap">
+{ "imports": { "three": "./vendor/three/three.module.js", "three/addons/": "./vendor/three/addons/" } }
+</script>
+<script src="vendor/d3.min.js"></script>
+<script src="vendor/qrcode.js"></script>
+</head>
+<body>
+<div id="viewport"><div id="stage">
+
+<!-- 1 ─────────────── TITLE -->
+<section class="slide s-title" data-id="title" data-title="Pulmonary Mechanics" data-section="Introduction" data-src="1" style="--glow:var(--blue);--gx:70%;--gy:46%">
+  <div class="split wide-left">
+    <div class="rise">
+      <div class="eyebrow"><span class="dot"></span>Respiratory Physiology</div>
+      <h1 class="hero-title">Pulmonary<br><span class="grad">Mechanics</span></h1>
+      <p class="subtitle">How pressure, compliance and resistance move air.</p>
+      <div class="row title-meta">
+        <span class="chip"><i style="--c:var(--blue)"></i>Guyton &amp; Hall · 15th ed. · pp. 501–507</span>
+        <span class="chip"><i style="--c:var(--cyan)"></i>Lecture by Dr Rajeev Bajaj</span>
+      </div>
+      <div class="kbd-hint start-hint"><kbd>→</kbd> or <kbd>Space</kbd> to begin · <kbd>H</kbd> for shortcuts</div>
+    </div>
+    <div class="visual"><div class="mount" id="hero-mount"></div></div>
+  </div>
+</section>
+
+<!-- 2 ─────────────── OBJECTIVES -->
+<section class="slide s-objectives" data-id="objectives" data-title="Learning objectives" data-section="Introduction" data-src="2,3" style="--glow:var(--cyan);--gx:50%;--gy:60%">
+  <div class="stack">
+    <div class="rise">
+      <div class="eyebrow"><span class="dot"></span>Learning objectives</div>
+      <h2 class="title">Six ideas. One breath.</h2>
+    </div>
+    <div class="obj-grid rise grow">
+      <div class="obj card hoverable" data-pop="lo-press" style="--c:var(--pink)"><div class="obj-ico"><svg viewBox="0 0 48 48"><path d="M6 30c6 0 6-12 12-12s6 12 12 12 6-12 12-12"/></svg></div><div class="obj-t">Pressures &amp; the breathing cycle</div><div class="obj-n">Objectives 6 · 7</div></div>
+      <div class="obj card hoverable" data-pop="lo-comp" style="--c:var(--purple)"><div class="obj-ico"><svg viewBox="0 0 48 48"><path d="M8 40C16 40 18 8 40 8"/><path d="M8 40h32M8 40V8"/></svg></div><div class="obj-t">Compliance &amp; elastic recoil</div><div class="obj-n">Objectives 8 – 11</div></div>
+      <div class="obj card hoverable" data-pop="lo-surf" style="--c:var(--cyan)"><div class="obj-ico"><svg viewBox="0 0 48 48"><circle cx="16" cy="26" r="8"/><circle cx="32" cy="22" r="12"/></svg></div><div class="obj-t">Surface tension &amp; surfactant</div><div class="obj-n">Objectives 12 · 13</div></div>
+      <div class="obj card hoverable" data-pop="lo-vol" style="--c:var(--blue)"><div class="obj-ico"><svg viewBox="0 0 48 48"><path d="M4 30q4-6 8 0t8 0 8-18 8 0 8 0"/></svg></div><div class="obj-t">Lung volumes &amp; spirometry</div><div class="obj-n">Objectives 1 – 4</div></div>
+      <div class="obj card hoverable" data-pop="lo-res" style="--c:var(--orange)"><div class="obj-ico"><svg viewBox="0 0 48 48"><path d="M4 16h14c6 0 6 8 12 8h14M4 32h14c6 0 6-8 12-8"/></svg></div><div class="obj-t">Airway resistance &amp; work</div><div class="obj-n">Objectives 5 · 14 · 15</div></div>
+      <div class="obj card hoverable" data-pop="lo-dis" style="--c:var(--green)"><div class="obj-ico"><svg viewBox="0 0 48 48"><path d="M6 40V20M18 40V10M30 40V26M42 40V16"/></svg></div><div class="obj-t">Obstructive vs restrictive</div><div class="obj-n">Objective 16</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- 3 ─────────────── BOTTOM LINE -->
+<section class="slide s-bottom" data-id="bottom-line" data-title="The bottom line" data-section="Introduction" data-src="4" style="--glow:var(--blue);--gx:50%;--gy:62%">
+  <div class="stack">
+    <div class="rise">
+      <div class="eyebrow"><span class="dot"></span>The bottom line</div>
+      <h2 class="title">Three questions explain every breath.</h2>
+    </div>
+    <div class="bl-grid grow">
+      <div class="bl card" data-step="1" style="--c:var(--blue)">
+        <div class="bl-n">1</div>
+        <div class="bl-q">What produces airflow?</div>
+        <div class="bl-viz"><svg viewBox="0 0 400 200" class="bl-svg" id="bl1"></svg></div>
+        <div class="bl-a">A pressure difference</div>
+        <div class="bl-s">P<sub>A</sub> ≠ P<sub>atm</sub></div>
+      </div>
+      <div class="bl card" data-step="2" style="--c:var(--green)">
+        <div class="bl-n">2</div>
+        <div class="bl-q">What changes alveolar pressure?</div>
+        <div class="bl-viz"><svg viewBox="0 0 400 200" class="bl-svg" id="bl2"></svg></div>
+        <div class="bl-a">Lung volume</div>
+        <div class="bl-s">Muscles → chest shape → volume</div>
+      </div>
+      <div class="bl card" data-step="3" style="--c:var(--orange)">
+        <div class="bl-n">3</div>
+        <div class="bl-q">How fast?</div>
+        <div class="bl-viz"><svg viewBox="0 0 400 200" class="bl-svg" id="bl3"></svg></div>
+        <div class="bl-a">Flow = ΔP ÷ R</div>
+        <div class="bl-s">Pressure gradient vs resistance</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 4 ─────────────── PRESSURES -->
+<section class="slide s-pressures" data-id="pressures" data-title="Four pressures" data-section="Pressures" data-src="5" style="--accent:var(--pink);--glow:var(--blue);--gx:66%;--gy:50%">
+  <div class="split narrow-left">
+    <div class="rise">
+      <div class="eyebrow"><span class="dot"></span>Pressures</div>
+      <h2 class="title">Four pressures</h2>
+      <ul class="plist mt-m">
+        <li data-k="pao" data-pop="p-pao" style="--c:var(--blue)"><i></i><b>P<sub>ao</sub></b><span>Airway opening</span></li>
+        <li data-k="ppl" data-pop="p-ppl" style="--c:var(--green)"><i></i><b>P<sub>pl</sub></b><span>Pleural space</span></li>
+        <li data-k="pa" data-pop="p-pa" style="--c:var(--pink)"><i></i><b>P<sub>A</sub></b><span>Alveoli</span></li>
+        <li data-k="pbs" data-pop="p-pbs" style="--c:var(--purple)"><i></i><b>P<sub>bs</sub></b><span>Body surface</span></li>
+      </ul>
+    </div>
+    <div class="visual"><div class="mount thorax-slot"></div><div class="pin-layer"></div></div>
+  </div>
+</section>
+
+<!-- 5 ─────────────── AIR MOVEMENT -->
+<section class="slide s-airmove" data-id="air-movement" data-title="Air moves down a pressure gradient" data-section="Pressures" data-src="6" style="--accent:var(--blue);--glow:var(--blue);--gx:66%;--gy:50%">
+  <div class="split narrow-left">
+    <div class="rise">
+      <div class="eyebrow"><span class="dot"></span>Air movement</div>
+      <h2 class="title sm">Air flows from high to low pressure</h2>
+      <div class="rules mt-m">
+        <button class="rule" data-r="0" style="--c:var(--red)"><span class="r-eq">P<sub>A</sub> = P<sub>ao</sub></span><span class="r-res">No flow</span></button>
+        <button class="rule" data-r="1" style="--c:var(--blue)"><span class="r-eq">P<sub>A</sub> &lt; P<sub>ao</sub></span><span class="r-res">Air in</span><span class="r-sub">Chest expands → P<sub>A</sub> falls</span></button>
+        <button class="rule" data-r="2" style="--c:var(--green)"><span class="r-eq">P<sub>A</sub> &gt; P<sub>ao</sub></span><span class="r-res">Air out</span><span class="r-sub">Chest recoils → P<sub>A</sub> rises</span></button>
+      </div>
+    </div>
+    <div class="visual">
+      <div class="mount thorax-slot"></div>
+      <div class="am-gauge">
+        <div class="readout"><div class="k">Alveolar pressure (P<sub>A</sub>)</div><div class="v"><span id="am-pa">0.0</span><small>mm Hg</small></div></div>
+        <div class="am-bar"><div class="am-zero"></div><div class="am-fill" id="am-fill"></div></div>
+        <div class="am-ends"><span>−1</span><span>0 = P<sub>ao</sub></span><span>+1</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 6 ─────────────── BREATHING CYCLE -->
+<section class="slide s-cycle" data-id="breathing-cycle" data-title="One quiet breath" data-section="Pressures" data-src="7,8" style="--accent:var(--cyan);--glow:var(--cyan);--gx:64%;--gy:50%">
+  <div class="split narrow-left">
+    <div class="rise">
+      <div class="eyebrow"><span class="dot"></span>Breathing cycle</div>
+      <h2 class="title sm">One quiet breath, 4 seconds</h2>
+      <div class="seg mt-m" id="cy-seg">
+        <button data-t="0">0 s</button><button data-t="1">1 s</button><button data-t="2">2 s</button><button data-t="3">3 s</button><button data-t="play" class="on">▶ Live</button>
+      </div>
+      <div class="cy-phase mt-m" id="cy-phase">Resting</div>
+      <div class="cy-vals">
+        <div class="cy-val" style="--c:var(--pink)"><span>P<sub>A</sub></span><b id="cy-pa">0</b><em>mm Hg</em></div>
+        <div class="cy-val" style="--c:var(--green)"><span>P<sub>pl</sub></span><b id="cy-ppl">−2.5</b><em>cm H₂O</em></div>
+        <div class="cy-val" style="--c:var(--cyan)"><span>Volume</span><b id="cy-v">FRC</b><em id="cy-vt">V<sub>T</sub> = 0</em></div>
+      </div>
+      <button class="note-chip" data-pop="note-cycle">ⓘ Values as on lecture slides</button>
+    </div>
+    <div class="visual"><div class="mount" id="cy-chart"></div></div>
+  </div>
+</section>
+
+<!-- 7 ─────────────── TRANSMURAL -->
+<section class="slide s-trans" data-id="transmural" data-title="Pressure across the airway wall" data-section="Pressures" data-src="8" style="--accent:var(--green);--glow:var(--green);--gx:66%;--gy:50%">
+  <div class="split narrow-left">
+    <div class="rise">
+      <div class="eyebrow"><span class="dot"></span>Transmural pressure</div>
+      <h2 class="title sm">What keeps airways open?</h2>
+      <div class="formula mt-m" data-pop="transmural">P<sub>TM</sub> = P<sub>airway</sub> − P<sub>pl</sub></div>
+      <ul class="points tight">
+        <li style="--bar:var(--green)">Positive → airway <b>held open</b></li>
+        <li style="--bar:var(--red)">Forced expiration → negative → <b>compressed</b></li>
+      </ul>
+    </div>
+    <div class="visual">
+      <div class="seg tm-seg" id="tm-seg">
+        <button data-i="0" class="on">A · Pre-inspiration</button><button data-i="1">B · Inspiration</button><button data-i="2">C · End-inspiration</button><button data-i="3">D · Forced expiration</button>
+      </div>
+      <div class="mount" id="tm-mount"></div>
+    </div>
+  </div>
+</section>
+
+<!-- 8 ─────────────── FOUR FACTORS -->
+<section class="slide s-factors" data-id="four-factors" data-title="What influences ventilation?" data-section="Ventilation" data-src="9" style="--glow:var(--purple);--gx:50%;--gy:62%">
+  <div class="stack">
+    <div class="rise">
+      <div class="eyebrow" style="--accent:var(--purple)"><span class="dot"></span>Ventilation</div>
+      <h2 class="title">What influences air movement?</h2>
+    </div>
+    <div class="f-grid rise grow">
+      <div class="f card hoverable" data-pop="f-size" style="--c:var(--blue)"><div class="f-n">1</div><div class="f-viz" data-anim="size"></div><div class="f-t">Size</div><div class="f-s">Lung volume</div></div>
+      <div class="f card hoverable" data-pop="f-comp" style="--c:var(--green)"><div class="f-n">2</div><div class="f-viz" data-anim="comp"></div><div class="f-t">Compliance</div><div class="f-s">Ease of expanding</div></div>
+      <div class="f card hoverable" data-pop="f-elast" style="--c:var(--purple)"><div class="f-n">3</div><div class="f-viz" data-anim="elast"></div><div class="f-t">Elastance</div><div class="f-s">Recoil to rest</div></div>
+      <div class="f card hoverable" data-pop="f-res" style="--c:var(--orange)"><div class="f-n">4</div><div class="f-viz" data-anim="res"></div><div class="f-t">Resistance</div><div class="f-s">Ease of airflow</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- 9 ─────────────── SIZE / BOYLE -->
+<section class="slide s-boyle" data-id="size-boyle" data-title="Size: Boyle's law" data-section="Ventilation" data-src="10" style="--accent:var(--blue);--glow:var(--blue);--gx:68%;--gy:50%">
+  <div class="split">
+    <div class="rise">
+      <div class="eyebrow"><span class="dot"></span>1 · Size</div>
+      <h2 class="title sm">Volume sets pressure</h2>
+      <ul class="points tight">
+        <li>Lung volume: <b>sex, race, height</b></li>
+        <li>Boyle: <b>P₁V₁ = P₂V₂</b> <span class="c-dim3">(T constant)</span><button class="more" data-pop="boyle"></button></li>
+        <li>P and V vary <b>inversely</b></li>
+      </ul>
+      <div class="formula mt-m darcy" data-pop="darcy">Flow =&nbsp;<span class="frac"><span>P<sub>A</sub> − P<sub>atm</sub></span><span>R</span></span></div>
+    </div>
+    <div class="visual">
+      <div class="mount" id="boyle-mount"></div>
+      <div class="boyle-hud">
+        <div class="readout"><div class="k">Volume</div><div class="v"><span id="by-v">1.00</span><small>V</small></div></div>
+        <div class="readout"><div class="k">Pressure</div><div class="v c-pink"><span id="by-p">1.00</span><small>P</small></div></div>
+        <div class="readout"><div class="k">P × V</div><div class="v c-green"><span id="by-pv">1.00</span></div></div>
+      </div>
+      <div class="boyle-slider slider"><label>Drag the piston or the slider<output id="by-out"></output></label><input type="range" id="by-range" min="35" max="100" value="100" style="--c:var(--blue)"></div>
+    </div>
+  </div>
+</section>
+
+<!-- 10 ─────────────── COMPLIANCE & ELASTANCE -->
+<section class="slide s-ce" data-id="compliance-elastance" data-title="Compliance & elastance" data-section="Ventilation" data-src="11" style="--accent:var(--green);--glow:var(--green);--gx:68%;--gy:52%">
+  <div class="split">
+    <div class="rise">
+      <div class="eyebrow"><span class="dot"></span>2 &amp; 3 · Compliance &amp; Elastance</div>
+      <h2 class="title sm">Stretch vs recoil</h2>
+      <ul class="points tight">
+        <li>Lungs are elastic → <b class="c-red">recoil</b></li>
+        <li>Compliance = <b>ΔV ÷ ΔP</b></li>
+        <li>Compliance ∝ <b>1 ÷ elastance</b><button class="more" data-pop="elastic-q"></button></li>
+      </ul>
+      <div class="slider mt-m" style="--c:var(--purple)"><label>Elastance<output id="ce-out">Normal</output></label><input type="range" id="ce-range" min="0" max="100" value="40" style="--c:var(--purple)"></div>
+    </div>
+    <div class="visual"><div class="mount" id="ce-mount"></div></div>
+  </div>
+</section>
+
+<!-- 11 ─────────────── ELASTIC RECOIL / LAPLACE -->
+<section class="slide s-recoil" data-id="recoil" data-title="Two sources of elastic recoil" data-section="Elastic recoil" data-src="12" style="--accent:var(--pink);--glow:var(--pink);--gx:70%;--gy:50%">
+  <div class="split">
+    <div class="rise">
+      <div class="eyebrow"><span class="dot"></span>Elastic recoil</div>
+      <h2 class="title sm">Two forces pull the lung inward</h2>
+      <div class="src-cards mt-m">
+        <div class="card src" data-pop="elastin" style="--c:var(--green)"><div class="src-t">Elastic fibres</div><div class="src-s">Elastin &amp; collagen</div></div>
+        <div class="card src" data-pop="surface-tension" style="--c:var(--blue)"><div class="src-t">Surface tension</div><div class="src-s">Alveolar lining fluid</div></div>
+      </div>
+      <div class="formula mt-m" data-pop="laplace">Laplace&nbsp;&nbsp;P =&nbsp;<span class="frac"><span>2T</span><span>r</span></span></div>
+    </div>
+    <div class="visual">
+      <div class="mount" id="lap-mount"></div>
+      <div class="lap-ctl slider"><label>Radius<output id="lap-out"></output></label><input type="range" id="lap-range" min="30" max="100" value="70" style="--c:var(--blue)"></div>
+    </div>
+  </div>
+</section>
+
+<!-- 12 ─────────────── SURFACTANT SOURCE -->
+<section class="slide s-surf" data-id="surfactant-source" data-title="Pulmonary surfactant" data-section="Surfactant" data-src="13" style="--accent:var(--cyan);--glow:var(--cyan);--gx:68%;--gy:50%">
+  <div class="split">
+    <div class="rise">
+      <div class="eyebrow"><span class="dot"></span>Pulmonary surfactant</div>
+      <h2 class="title sm"><span class="c-blue">Surf</span>ace-<span class="c-green">act</span>ive age<span class="c-blue">nt</span></h2>
+      <ul class="points tight">
+        <li><b>↓ Surface tension</b> of alveolar fluid</li>
+        <li><b>Type II pneumocytes</b> → lamellar bodies</li>
+        <li>Spreads as a <b>monolayer</b></li>
+        <li>From <b>week 25</b> · needs <b class="c-red">glucocorticoids</b><button class="more note" data-pop="note-25"></button></li>
+      </ul>
+    </div>
+    <div class="visual">
+      <div class="mount" id="surf-mount"></div>
+      <div class="gest" id="gest"></div>
+    </div>
+  </div>
+</section>
+
+<!-- 13 ─────────────── SURFACTANT COMPOSITION -->
+<section class="slide s-comp" data-id="surfactant-composition" data-title="Composition & turnover" data-section="Surfactant" data-src="14" style="--accent:var(--cyan);--glow:var(--cyan);--gx:50%;--gy:55%">
+  <div class="stack">
+    <div class="rise">
+      <div class="eyebrow"><span class="dot"></span>Pulmonary surfactant</div>
+      <h2 class="title sm">Composition &amp; turnover</h2>
+    </div>
+    <div class="comp-grid grow">
+      <div class="comp-col"><div class="mount" id="donut"></div><button class="note-chip abs-b" data-pop="note-comp">ⓘ Lecture values</button></div>
+      <div class="comp-col"><div class="mount" id="mono"></div><div class="comp-cap" data-pop="monolayer">Why a monolayer?<button class="more"></button></div></div>
+      <div class="comp-col"><div class="mount" id="turn"></div><button class="note-chip abs-b" data-pop="note-turn">ⓘ Lecture value</button></div>
+    </div>
+  </div>
+</section>
+
+<!-- 14 ─────────────── SURFACTANT FUNCTION -->
+<section class="slide s-func" data-id="surfactant-function" data-title="Why surfactant matters" data-section="Surfactant" data-src="15" style="--accent:var(--cyan);--glow:var(--cyan);--gx:68%;--gy:50%">
+  <div class="split">
+    <div class="rise">
+      <div class="eyebrow"><span class="dot"></span>Pulmonary surfactant</div>
+      <h2 class="title sm">Keeps small alveoli open</h2>
+      <ul class="points tight">
+        <li>More concentrated in <b>small alveoli</b></li>
+        <li>Prevents <b>collapse</b> → stable alveoli</li>
+        <li>↓ Recoil → <b>easier breathing</b></li>
+        <li style="--bar:var(--red)">Deficient → <b class="c-red">atelectasis</b><button class="more" data-pop="atelectasis"></button></li>
+      </ul>
+    </div>
+    <div class="visual">
+      <div class="mount" id="bub-mount"></div>
+      <div class="bub-ctl">
+        <div class="seg" id="bub-seg"><button data-s="0" data-c style="--c:var(--red)">No surfactant</button><button data-s="1" data-c style="--c:var(--green)" class="on">Surfactant</button></div>
+        <button class="btn" id="bub-play"><svg viewBox="0 0 24 24"><path d="M7 4l13 8-13 8z" fill="currentColor"/></svg>Connect</button>
+        <button class="btn ghost" id="bub-reset">Reset</button>
+      </div>
+      <div class="bub-read">
+        <div class="readout"><div class="k">Small alveolus</div><div class="v"><span id="bub-p1">—</span><small>P</small></div></div>
+        <div class="readout"><div class="k">Large alveolus</div><div class="v"><span id="bub-p2">—</span><small>P</small></div></div>
+      </div>
+      <div class="bub-status" id="bub-status"></div>
+    </div>
+  </div>
+</section>
+
+<!-- 15 ─────────────── LUNG COMPLIANCE -->
+<section class="slide s-lc" data-id="lung-compliance" data-title="Compliance of the lungs" data-section="Compliance" data-src="16" style="--accent:var(--blue);--glow:var(--blue);--gx:68%;--gy:50%">
+  <div class="split">
+    <div class="rise">
+      <div class="eyebrow"><span class="dot"></span>Compliance · lungs alone</div>
+      <h2 class="title sm">Compliance is a slope</h2>
+      <ul class="points tight">
+        <li>Steep near rest → <b class="c-green">high compliance</b></li>
+        <li><b>≈ 200 mL / cm H₂O</b> <span class="c-dim3">(both lungs)</span></li>
+        <li>Flat at high volume → <b class="c-orange">stiff</b></li>
+      </ul>
+      <div class="lc-meter mt-m"><div class="k">Compliance at the cursor</div><div class="lc-bar"><div id="lc-fill"></div></div><div class="lc-lbl" id="lc-lbl">High</div></div>
+    </div>
+    <div class="visual"><div class="mount" id="lc-chart"></div></div>
+  </div>
+</section>
+
+<!-- 16 ─────────────── CHEST WALL COMPLIANCE -->
+<section class="slide s-cw" data-id="chest-compliance" data-title="Compliance of the chest wall" data-section="Compliance" data-src="17" style="--accent:var(--purple);--glow:var(--purple);--gx:68%;--gy:50%">
+  <div class="split">
+    <div class="rise">
+      <div class="eyebrow"><span class="dot"></span>Compliance · chest wall alone</div>
+      <h2 class="title sm">The chest wall wants to spring out</h2>
+      <ul class="points tight">
+        <li style="--bar:var(--blue)">Holds volume at <b>zero pressure</b></li>
+        <li style="--bar:var(--red)"><b>Hard to compress</b> (negative P)</li>
+        <li style="--bar:var(--green)"><b>Easier to expand</b></li>
+      </ul>
+    </div>
+    <div class="visual"><div class="mount" id="cw-chart"></div></div>
+  </div>
+</section>
+
+<!-- 17 ─────────────── LUNG + CHEST WALL -->
+<section class="slide s-sys" data-id="combined-frc" data-title="Lungs + chest wall set FRC" data-section="Compliance" data-src="18" style="--accent:var(--green);--glow:var(--green);--gx:66%;--gy:50%">
+  <div class="split narrow-left">
+    <div class="rise">
+      <div class="eyebrow"><span class="dot"></span>Compliance · whole system</div>
+      <h2 class="title sm">A tug-of-war sets FRC</h2>
+      <ul class="points tight">
+        <li style="--bar:var(--blue)">Lung recoils <b>in</b></li>
+        <li style="--bar:var(--purple)">Chest wall springs <b>out</b></li>
+        <li style="--bar:var(--green)">Balance = <b class="c-green">FRC</b></li>
+      </ul>
+      <div class="sys-arrows mt-m" id="sys-arrows"></div>
+      <div class="slider" style="--c:var(--green)"><label>Lung volume<output id="sys-out"></output></label><input type="range" id="sys-range" min="150" max="595" value="310" style="--c:var(--green)"></div>
+    </div>
+    <div class="visual"><div class="mount" id="sys-chart"></div></div>
+  </div>
+</section>
+
+<!-- 18 ─────────────── PLEURAL PRESSURE & PNEUMOTHORAX -->
+<section class="slide s-ptx" data-id="pneumothorax" data-title="Negative pleural pressure & pneumothorax" data-section="Compliance" data-src="18,43" style="--accent:var(--green);--glow:var(--blue);--gx:66%;--gy:50%">
+  <div class="split narrow-left">
+    <div class="rise">
+      <div class="eyebrow"><span class="dot"></span>Intrapleural pressure</div>
+      <h2 class="title sm">Why pleural pressure is negative</h2>
+      <ul class="points tight">
+        <li>Opposite pulls on a <b>sealed</b> space</li>
+        <li>→ Sub-atmospheric P<sub>pl</sub> at FRC<button class="more" data-pop="ppl-neg"></button></li>
+        <li style="--bar:var(--red)">Air enters → <b class="c-red">lung collapses</b>, chest springs out</li>
+      </ul>
+      <div class="seg mt-m" id="ptx-seg"><button data-p="0" class="on">Intact pleura</button><button data-p="1" data-c style="--c:var(--red)">Pneumothorax</button></div>
+    </div>
+    <div class="visual"><div class="mount thorax-slot"></div><div class="pin-layer"></div></div>
+  </div>
+</section>
+
+<!-- 19 ─────────────── FRC IN DISEASE -->
+<section class="slide s-frcd" data-id="frc-disease" data-title="FRC in disease" data-section="Compliance" data-src="19" style="--accent:var(--orange);--glow:var(--orange);--gx:60%;--gy:58%">
+  <div class="stack">
+    <div class="rise">
+      <div class="eyebrow"><span class="dot"></span>FRC in disease</div>
+      <h2 class="title sm">Change one recoil, FRC moves</h2>
+    </div>
+    <div class="frcd-wrap grow">
+      <div class="frcd-ctl">
+        <div class="seg" id="frcd-seg" style="flex-direction:column;border-radius:calc(var(--px)*30)"><button data-m="0" class="on">Normal</button><button data-m="1" data-c style="--c:var(--blue)">↓ Lung compliance</button><button data-m="2" data-c style="--c:var(--purple)">↓ Chest compliance</button></div>
+        <div class="readout mt-m"><div class="k">Functional residual capacity</div><div class="v" id="frcd-v">Normal</div></div>
+      </div>
+      <div class="mount" id="frcd-chart"></div>
+    </div>
+  </div>
+</section>
+
+<!-- 20 ─────────────── THINK -->
+<section class="slide s-think" data-id="think" data-title="Think it through" data-section="Compliance" data-src="20" style="--accent:var(--yellow);--glow:var(--yellow);--gx:50%;--gy:60%">
+  <div class="stack">
+    <div class="rise">
+      <div class="eyebrow"><span class="dot"></span>Think it through</div>
+      <h2 class="title sm">Tap a question to reveal</h2>
+    </div>
+    <div class="flip-grid three grow rise">
+      <button class="flip" style="--c:var(--blue)"><div class="flip-in"><div class="ff"><span class="fq">Q1</span>Why is quiet inspiration <b>active</b> but expiration <b>passive</b>?</div><div class="fb">Muscles work against recoil to rise above FRC. Relax — <b>recoil returns the system to FRC</b>.</div></div></button>
+      <button class="flip" style="--c:var(--green)"><div class="flip-in"><div class="ff"><span class="fq">Q2</span>How do you keep the lungs <b>full</b> for a few seconds?</div><div class="fb">Keep inspiratory muscles <b>contracted</b> — or <b>close the glottis</b>. Near TLC everything recoils inward.</div></div></button>
+      <button class="flip" style="--c:var(--purple)"><div class="flip-in"><div class="ff"><span class="fq">Q3</span>Do lung and chest-wall recoil <b>always</b> oppose?</div><div class="fb"><b>No.</b> Above the chest wall's resting volume, <b>both recoil inward</b>.</div></div></button>
+    </div>
+  </div>
+</section>
+
+<!-- 21 ─────────────── STATIC VS DYNAMIC -->
+<section class="slide s-sd" data-id="static-dynamic" data-title="Static vs dynamic mechanics" data-section="Lung mechanics" data-src="21" style="--glow:var(--blue);--gx:50%;--gy:60%">
+  <div class="stack">
+    <div class="rise">
+      <div class="eyebrow"><span class="dot"></span>Lung mechanics</div>
+      <h2 class="title">Static vs dynamic</h2>
+    </div>
+    <div class="sd-grid grow rise">
+      <div class="sd card" style="--c:var(--cyan)">
+        <div class="sd-viz" id="sd-static"></div>
+        <div class="sd-k">Static</div>
+        <div class="sd-d">No airflow · time given</div>
+        <div class="sd-row"><span>Measures</span><b>Lung volumes</b></div>
+        <div class="sd-row"><span>Tells us</span><b class="c-green">Compliance</b></div>
+      </div>
+      <div class="sd card" style="--c:var(--orange)">
+        <div class="sd-viz" id="sd-dynamic"></div>
+        <div class="sd-k">Dynamic</div>
+        <div class="sd-d">Airflow · forced effort</div>
+        <div class="sd-row"><span>Measures</span><b>Rate of airflow</b></div>
+        <div class="sd-row"><span>Tells us</span><b class="c-green">Resistance</b></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 22 ─────────────── SPIROMETER -->
+<section class="slide s-spiro" data-id="spirometer" data-title="Volume spirometry" data-section="Lung volumes" data-src="22" style="--accent:var(--blue);--glow:var(--blue);--gx:66%;--gy:46%">
+  <div class="split narrow-left">
+    <div class="rise">
+      <div class="eyebrow"><span class="dot"></span>Volume spirometry</div>
+      <h2 class="title sm">A bell that weighs your breath</h2>
+      <ul class="points tight">
+        <li>Breathe into a <b>bell over water</b></li>
+        <li style="--bar:var(--orange)">Exhale → bell <b>up</b> → pen <b>down</b><button class="more" data-pop="spiro-pen"></button></li>
+        <li>Trace = <b>volume vs time</b></li>
+      </ul>
+      <div class="row mt-m">
+        <div class="seg" id="sp-seg"><button data-q="tidal">Tidal</button><button data-q="full" class="on">Full</button></div>
+        <button class="btn" id="sp-play">Replay</button>
+      </div>
+    </div>
+    <div class="visual"><div class="mount" id="sp-mount"></div><div class="pin-layer"></div><div class="sp-trace" id="sp-trace"></div></div>
+  </div>
+</section>
+
+<!-- 23 ─────────────── VOLUMES & CAPACITIES -->
+<section class="slide s-vol" data-id="volumes" data-title="Lung volumes & capacities" data-section="Lung volumes" data-src="23,24,25" style="--accent:var(--blue);--glow:var(--blue);--gx:45%;--gy:50%">
+  <div class="vol-wrap">
+    <div class="vol-head rise">
+      <div class="eyebrow"><span class="dot"></span>Spirogram</div>
+      <h2 class="title sm">4 volumes · 4 capacities</h2>
+    </div>
+    <div class="vol-chart"><div class="mount" id="vol-chart"></div></div>
+    <div class="vol-legend rise" id="vol-legend"></div>
+  </div>
+</section>
+
+<!-- 24 ─────────────── NOT MEASURABLE -->
+<section class="slide s-nm" data-id="not-measurable" data-title="What spirometry can't measure" data-section="Lung volumes" data-src="26" style="--accent:var(--orange);--glow:var(--orange);--gx:66%;--gy:60%">
+  <div class="split narrow-left">
+    <div class="rise">
+      <div class="eyebrow"><span class="dot"></span>Spirometry's blind spot</div>
+      <h2 class="title sm">Air you can never breathe out</h2>
+      <ul class="points tight">
+        <li style="--bar:var(--orange)"><b>RV</b> — after maximal exhalation</li>
+        <li style="--bar:var(--green)"><b>FRC</b> — after normal exhalation</li>
+        <li style="--bar:var(--purple)"><b>TLC</b> — after maximal inhalation</li>
+      </ul>
+      <div class="formula mt-m" data-pop="measure-rv">All contain RV<button class="more"></button></div>
+    </div>
+    <div class="visual"><div class="mount" id="nm-chart"></div></div>
+  </div>
+</section>
+
+<!-- 25 ─────────────── VOLUME LINKS -->
+<section class="slide s-links" data-id="volume-links" data-title="Lung volume changes everything" data-section="Lung volumes" data-src="27" style="--accent:var(--purple);--glow:var(--purple);--gx:50%;--gy:60%">
+  <div class="stack">
+    <div class="rise">
+      <div class="eyebrow"><span class="dot"></span>Lung volumes</div>
+      <h2 class="title sm">One volume, two consequences</h2>
+    </div>
+    <div class="links-grid grow">
+      <div class="links-col"><div class="links-t">Compliance</div><div class="mount" id="lk-a"></div></div>
+      <div class="links-col"><div class="links-t">Airway resistance</div><div class="mount" id="lk-b"></div></div>
+    </div>
+    <div class="slider links-slider" style="--c:var(--purple)"><label>Lung volume<output id="lk-out"></output></label><input type="range" id="lk-range" min="0" max="100" value="35" style="--c:var(--purple)"></div>
+  </div>
+</section>
+
+<!-- 26 ─────────────── POISEUILLE -->
+<section class="slide s-pois" data-id="poiseuille" data-title="Airflow resistance: Poiseuille" data-section="Resistance" data-src="28" style="--accent:var(--orange);--glow:var(--orange);--gx:66%;--gy:46%">
+  <div class="split narrow-left">
+    <div class="rise">
+      <div class="eyebrow"><span class="dot"></span>4 · Airflow resistance</div>
+      <h2 class="title sm">Radius rules</h2>
+      <div class="formula mt-s" data-pop="poiseuille">R =&nbsp;<span class="frac"><span>8 L η</span><span>π r⁴</span></span></div>
+      <ul class="points tight">
+        <li style="--bar:var(--orange)">Narrow → <b>↑↑ R</b> (1/r⁴)</li>
+        <li style="--bar:var(--purple)">Longer → <b>↑ R</b></li>
+        <li style="--bar:var(--cyan)">More viscous → <b>↑ R</b></li>
+      </ul>
+    </div>
+    <div class="visual">
+      <div class="mount" id="pois-mount"></div>
+      <div class="pois-ctl">
+        <div class="slider" style="--c:var(--orange)"><label>Radius r<output id="po-r">1.00</output></label><input type="range" id="po-rr" min="40" max="100" value="100" style="--c:var(--orange)"></div>
+        <div class="slider" style="--c:var(--purple)"><label>Length L<output id="po-l">1.00</output></label><input type="range" id="po-ll" min="50" max="150" value="100" style="--c:var(--purple)"></div>
+        <div class="slider" style="--c:var(--cyan)"><label>Viscosity η<output id="po-e">1.00</output></label><input type="range" id="po-ee" min="100" max="300" value="100" style="--c:var(--cyan)"></div>
+      </div>
+      <div class="pois-read">
+        <div class="readout"><div class="k">Resistance</div><div class="v c-orange">×<span id="po-R">1.0</span></div></div>
+        <div class="readout"><div class="k">Flow</div><div class="v c-blue">×<span id="po-F">1.00</span></div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 27 ─────────────── BRONCHOMOTOR -->
+<section class="slide s-bm" data-id="bronchomotor" data-title="What changes airway resistance?" data-section="Resistance" data-src="29" style="--glow:var(--orange);--gx:50%;--gy:55%">
+  <div class="stack">
+    <div class="rise">
+      <div class="eyebrow" style="--accent:var(--orange)"><span class="dot"></span>Airway calibre</div>
+      <h2 class="title sm">What changes airway resistance?</h2>
+    </div>
+    <div class="bm-grid grow">
+      <div class="bm-col" style="--c:var(--red)">
+        <div class="bm-h">Constriction</div>
+        <button class="bm-chip" data-t="1">Parasympathetic · M3</button>
+        <button class="bm-chip" data-t="0.9">Histamine</button>
+        <button class="bm-chip" data-t="0.8">Acetylcholine</button>
+        <button class="bm-chip" data-t="0.85">Leukotrienes</button>
+        <button class="bm-chip" data-t="0.6">Serotonin</button>
+        <button class="bm-chip" data-t="0.45">α-adrenergic agonists</button>
+      </div>
+      <div class="bm-center"><div class="mount" id="bm-mount"></div><div class="bm-read"><div class="readout"><div class="k">Radius</div><div class="v"><span id="bm-r">×1.00</span></div></div><div class="readout"><div class="k">Resistance</div><div class="v c-orange"><span id="bm-R">×1.0</span></div></div></div></div>
+      <div class="bm-col" style="--c:var(--green)">
+        <div class="bm-h">Dilation</div>
+        <button class="bm-chip" data-t="-1">Sympathetic · β₂</button>
+        <button class="bm-chip" data-t="-0.6">↓ O₂ in small airways</button>
+        <button class="bm-chip" data-t="-0.6">↑ CO₂ in small airways</button>
+        <button class="bm-chip" data-t="-0.7">Nitric oxide</button>
+        <button class="bm-chip reset" data-t="0">Baseline</button>
+        <button class="note-chip" data-pop="note-o2">ⓘ Literature note</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 28 ─────────────── TRACTION -->
+<section class="slide s-trac" data-id="traction" data-title="Lung volume & airway resistance" data-section="Resistance" data-src="30,31" style="--accent:var(--yellow);--glow:var(--yellow);--gx:60%;--gy:50%">
+  <div class="split narrow-left">
+    <div class="rise">
+      <div class="eyebrow"><span class="dot"></span>Radial traction</div>
+      <h2 class="title sm">Bigger lungs, wider airways</h2>
+      <ul class="points tight">
+        <li>↑ Volume → elastin <b>pulls airways open</b></li>
+        <li style="--bar:var(--red)">↓ Recoil (emphysema) → <b class="c-red">↑ resistance</b><button class="more" data-pop="two-recoil"></button></li>
+      </ul>
+      <div class="seg mt-m" id="tr-seg"><button data-k="1" class="on">Normal</button><button data-k="0.25" data-c style="--c:var(--red)">Emphysema</button></div>
+      <div class="slider mt-s" style="--c:var(--yellow)"><label>Lung volume<output id="tr-out"></output></label><input type="range" id="tr-range" min="0" max="100" value="45" style="--c:var(--yellow)"></div>
+    </div>
+    <div class="visual trac-vis">
+      <div class="trac-3d"><div class="mount" id="tr-mount"></div></div>
+      <div class="trac-chart"><div class="mount" id="tr-chart"></div></div>
+    </div>
+  </div>
+</section>
+
+<!-- 29 ─────────────── TURBULENCE -->
+<section class="slide s-turb" data-id="turbulence" data-title="Turbulence & density" data-section="Resistance" data-src="32" style="--accent:var(--cyan);--glow:var(--cyan);--gx:66%;--gy:48%">
+  <div class="split narrow-left">
+    <div class="rise">
+      <div class="eyebrow"><span class="dot"></span>Turbulence &amp; density</div>
+      <h2 class="title sm">Chaos costs pressure</h2>
+      <ul class="points tight">
+        <li style="--bar:var(--red)">Turbulence → <b>↑ resistance</b></li>
+        <li>Large airways: <b>turbulent / mixed</b></li>
+        <li>Small bronchioles: <b>laminar</b></li>
+        <li style="--bar:var(--green)">Less dense gas → <b>↓ resistance</b><button class="more" data-pop="heliox"></button></li>
+      </ul>
+    </div>
+    <div class="visual">
+      <div class="mount" id="tb-mount"></div>
+      <div class="tb-ctl">
+        <div class="seg" id="tb-reg"><button data-r="laminar">Laminar</button><button data-r="transitional">Transitional</button><button data-r="turbulent" class="on">Turbulent</button></div>
+        <div class="seg" id="tb-gas"><button data-g="air" class="on">N₂ + O₂</button><button data-g="heliox" data-c style="--c:var(--green)">He + O₂</button></div>
+      </div>
+      <div class="tb-read readout"><div class="k">Relative resistance · illustrative</div><div class="v c-orange">×<span id="tb-R">2.5</span></div></div>
+    </div>
+  </div>
+</section>
+
+<!-- 30 ─────────────── HYSTERESIS -->
+<section class="slide s-hyst" data-id="hysteresis" data-title="Hysteresis" data-section="Dynamic mechanics" data-src="33,34" style="--accent:var(--pink);--glow:var(--pink);--gx:66%;--gy:50%">
+  <div class="split narrow-left">
+    <div class="rise">
+      <div class="eyebrow"><span class="dot"></span>Pressure–volume loop</div>
+      <h2 class="title sm">Hysteresis</h2>
+      <ul class="points tight">
+        <li>Inflation ≠ deflation path</li>
+        <li>Same pressure → <b>more volume on expiration</b></li>
+        <li style="--bar:var(--orange)">Loop = extra force vs <b>airway resistance</b></li>
+      </ul>
+      <div class="seg mt-m" id="hy-seg"><button data-m="static">Static</button><button data-m="dynamic" class="on">Dynamic</button></div>
+    </div>
+    <div class="visual"><div class="mount" id="hy-chart"></div></div>
+  </div>
+</section>
+
+<!-- 31 ─────────────── WORK OF BREATHING -->
+<section class="slide s-work" data-id="work" data-title="Work of breathing" data-section="Dynamic mechanics" data-src="35,36" style="--accent:var(--red);--glow:var(--red);--gx:66%;--gy:50%">
+  <div class="split narrow-left">
+    <div class="rise">
+      <div class="eyebrow"><span class="dot"></span>Work of breathing</div>
+      <h2 class="title sm">Work = area</h2>
+      <ul class="points tight">
+        <li style="--bar:var(--purple)"><b>Compliance work</b> — elastic</li>
+        <li style="--bar:var(--orange)"><b>Resistance work</b> — airflow</li>
+        <li style="--bar:var(--red)">↑ with <b>↓ compliance</b> or <b>↑ resistance</b></li>
+      </ul>
+      <div class="seg mt-m" id="wk-seg" style="flex-direction:column;border-radius:calc(var(--px)*30)"><button data-m="0" class="on">Normal</button><button data-m="1" data-c style="--c:var(--purple)">↓ Compliance</button><button data-m="2" data-c style="--c:var(--orange)">↑ Resistance</button></div>
+      <div class="readout mt-m"><div class="k">Total work</div><div class="v c-red">×<span id="wk-v">1.00</span></div></div>
+    </div>
+    <div class="visual"><div class="mount" id="wk-chart"></div></div>
+  </div>
+</section>
+
+<!-- 32 ─────────────── FLOW-VOLUME LOOP -->
+<section class="slide s-fv" data-id="flow-volume" data-title="Flow–volume loop" data-section="Dynamic spirometry" data-src="37,38" style="--accent:var(--blue);--glow:var(--blue);--gx:62%;--gy:50%">
+  <div class="split narrow-left">
+    <div class="rise">
+      <div class="eyebrow"><span class="dot"></span>Dynamic spirometry</div>
+      <h2 class="title sm">The flow–volume loop</h2>
+      <ol class="fv-steps mt-m" id="fv-steps">
+        <li data-i="0"><span>1</span>Inhale fully <em>→ TLC</em></li>
+        <li data-i="1"><span>2</span>Blast out, all the way <em>→ RV</em></li>
+        <li data-i="2"><span>3</span>Inhale hard <em>→ TLC</em></li>
+      </ol>
+      <div class="fv-tags" id="fv-tags">
+        <button class="fv-tag" data-pop="pefr" style="--c:var(--blue)">PEFR</button>
+        <button class="fv-tag" data-pop="fvc" style="--c:var(--green)">FVC</button>
+        <button class="fv-tag" data-pop="fev1" style="--c:var(--cyan)">FEV₁</button>
+        <button class="fv-tag" data-pop="ratio" style="--c:var(--yellow)">FEV₁/FVC</button>
+        <button class="fv-tag" data-pop="fef" style="--c:var(--pink)">FEF<sub>25–75%</sub></button>
+      </div>
+      <button class="btn mt-m" id="fv-play">Replay manoeuvre</button>
+    </div>
+    <div class="visual fv-vis"><div class="mount" id="fv-chart"></div><div class="fv-inset"><div class="mount" id="fv-inset"></div></div></div>
+  </div>
+</section>
+
+<!-- 33 ─────────────── EFFORT -->
+<section class="slide s-eff" data-id="effort" data-title="Effort-dependent vs independent" data-section="Dynamic spirometry" data-src="39,8" style="--accent:var(--orange);--glow:var(--orange);--gx:64%;--gy:50%">
+  <div class="split narrow-left">
+    <div class="rise">
+      <div class="eyebrow"><span class="dot"></span>Effort</div>
+      <h2 class="title sm">Push harder — up to a point</h2>
+      <ul class="points tight">
+        <li style="--bar:var(--blue)"><b>PEFR</b> — effort-dependent</li>
+        <li style="--bar:var(--pink)"><b>Late flow, FEF<sub>25–75%</sub></b> — effort-independent</li>
+        <li style="--bar:var(--red)">Why? <b>Dynamic airway compression</b><button class="more" data-pop="dyn-comp"></button></li>
+      </ul>
+      <div class="slider mt-m" style="--c:var(--orange)"><label>Expiratory effort<output id="ef-out">Maximal</output></label><input type="range" id="ef-range" min="25" max="100" value="100" style="--c:var(--orange)"></div>
+    </div>
+    <div class="visual"><div class="mount" id="ef-chart"></div></div>
+  </div>
+</section>
+
+<!-- 34 ─────────────── OBSTRUCTIVE VS RESTRICTIVE -->
+<section class="slide s-or" data-id="obstructive-restrictive" data-title="Obstructive vs restrictive" data-section="Disease" data-src="40" style="--glow:var(--orange);--gx:62%;--gy:50%">
+  <div class="split narrow-left">
+    <div class="rise">
+      <div class="eyebrow" style="--accent:var(--orange)"><span class="dot"></span>Spirometry in disease</div>
+      <h2 class="title sm">Two patterns</h2>
+      <div class="or-cards mt-s">
+        <button class="or-card" data-m="obs" style="--c:var(--orange)"><div class="or-t">Obstructive</div><div class="or-l">↑ Resistance · ↓ flow</div><div class="or-l">↓ FEV₁/FVC · ↓ FEF<sub>25–75</sub></div><div class="or-e">Asthma · COPD</div></button>
+        <button class="or-card" data-m="res" style="--c:var(--purple)"><div class="or-t">Restrictive</div><div class="or-l">↓ Compliance · ↓ volumes</div><div class="or-l">Normal flow · ↓ FVC</div><div class="or-e">Fibrosis · IRDS</div></button>
+      </div>
+    </div>
+    <div class="visual or-vis">
+      <div class="seg or-seg" id="or-seg"><button data-m="norm" class="on" data-c style="--c:var(--green)">Normal</button><button data-m="obs" data-c style="--c:var(--orange)">Obstructive</button><button data-m="res" data-c style="--c:var(--purple)">Restrictive</button></div>
+      <div class="or-charts"><div class="or-a"><div class="mount" id="or-vt"></div></div><div class="or-b"><div class="mount" id="or-fv"></div></div></div>
+      <div class="or-read" id="or-read"></div>
+    </div>
+  </div>
+</section>
+
+<!-- 35 ─────────────── FIBROSIS -->
+<section class="slide s-fib" data-id="fibrosis" data-title="Decreased compliance: fibrosis" data-section="Disease" data-src="41" style="--accent:var(--purple);--glow:var(--purple);--gx:72%;--gy:46%">
+  <div class="split">
+    <div class="rise">
+      <div class="eyebrow"><span class="dot"></span>↓ Compliance</div>
+      <h2 class="title sm">Stiff lungs</h2>
+      <p class="subtitle sm-sub">Fibrosis · oedema · ↓ surfactant</p>
+      <div class="vt-rows mt-m">
+        <div class="vt-row" data-pop="fib-tlc"><span class="vt-k">TLC</span><span class="vt-v c-purple">small ↓</span></div>
+        <div class="vt-row" data-pop="fib-frc"><span class="vt-k">FRC</span><span class="vt-v c-purple big">large ↓</span></div>
+        <div class="vt-row" data-pop="fib-rv"><span class="vt-k">RV</span><span class="vt-v">unaffected</span></div>
+      </div>
+    </div>
+    <div class="visual dz-vis"><div class="dz-3d"><div class="mount dz-slot"></div></div><div class="dz-bars" id="fib-bars"></div></div>
+  </div>
+</section>
+
+<!-- 36 ─────────────── EMPHYSEMA -->
+<section class="slide s-emph" data-id="emphysema" data-title="Increased compliance: emphysema" data-section="Disease" data-src="42" style="--accent:var(--orange);--glow:var(--orange);--gx:72%;--gy:46%">
+  <div class="split">
+    <div class="rise">
+      <div class="eyebrow"><span class="dot"></span>↑ Compliance</div>
+      <h2 class="title sm">Floppy lungs</h2>
+      <p class="subtitle sm-sub">Severe emphysema · loss of elastic tissue</p>
+      <div class="vt-rows mt-m">
+        <div class="vt-row" data-pop="emp-tlc"><span class="vt-k">TLC</span><span class="vt-v c-orange">small ↑</span></div>
+        <div class="vt-row" data-pop="emp-frc"><span class="vt-k">FRC</span><span class="vt-v c-orange big">large ↑</span></div>
+        <div class="vt-row" data-pop="emp-rv"><span class="vt-k">RV</span><span class="vt-v c-orange">↑ air trapping</span></div>
+      </div>
+    </div>
+    <div class="visual dz-vis"><div class="dz-3d"><div class="mount dz-slot"></div></div><div class="dz-bars" id="emp-bars"></div></div>
+  </div>
+</section>
+
+<!-- 37 ─────────────── CLINICAL -->
+<section class="slide s-clin" data-id="clinical" data-title="Clinical scenarios" data-section="Disease" data-src="43" style="--accent:var(--red);--glow:var(--red);--gx:50%;--gy:60%">
+  <div class="stack">
+    <div class="rise">
+      <div class="eyebrow"><span class="dot"></span>Clinical scenarios</div>
+      <h2 class="title sm">What would happen if…</h2>
+    </div>
+    <div class="flip-grid six grow rise">
+      <button class="flip" style="--c:var(--blue)"><div class="flip-in"><div class="ff"><span class="fq">1</span>One <b>phrenic nerve</b> is cut?</div><div class="fb">That <b>hemidiaphragm is paralysed</b> — it moves up on inspiration · ↓ VC</div></div></button>
+      <button class="flip" style="--c:var(--red)"><div class="flip-in"><div class="ff"><span class="fq">2</span>A <b>hole</b> in the chest wall?</div><div class="fb"><b>Pneumothorax</b>: P<sub>pl</sub> → atmospheric · lung collapses · chest springs out</div></div></button>
+      <button class="flip" style="--c:var(--cyan)"><div class="flip-in"><div class="ff"><span class="fq">3</span>Fluid in the <b>pleural space</b>?</div><div class="fb"><b>Effusion</b> compresses the lung → restricted expansion · ↓ volumes</div></div></button>
+      <button class="flip" style="--c:var(--yellow)"><div class="flip-in"><div class="ff"><span class="fq">4</span>Loss of <b>surfactant</b>?</div><div class="fb">↑ Surface tension · ↓ compliance · <b>atelectasis</b> (IRDS, drowning)</div></div></button>
+      <button class="flip" style="--c:var(--purple)"><div class="flip-in"><div class="ff"><span class="fq">5</span>Extensive change in <b>elastic fibres</b>?</div><div class="fb"><b>Emphysema</b>: ↑ compliance, air trapping · <b>Fibrosis</b>: ↓ compliance</div></div></button>
+      <button class="flip" style="--c:var(--pink)"><div class="flip-in"><div class="ff"><span class="fq">6</span>Fluid in the <b>alveoli</b>?</div><div class="fb"><b>Pulmonary oedema</b> (LV failure) → ↓ compliance · ↑ work of breathing</div></div></button>
+    </div>
+  </div>
+</section>
+
+<!-- 38 ─────────────── TAKEAWAYS -->
+<section class="slide s-take" data-id="takeaways" data-title="Key takeaways" data-section="Summary" style="--glow:var(--blue);--gx:50%;--gy:50%">
+  <div class="stack">
+    <div class="rise">
+      <div class="eyebrow"><span class="dot"></span>Summary</div>
+      <h2 class="title">Remember five things</h2>
+    </div>
+    <div class="take-list grow rise">
+      <div class="take" style="--c:var(--blue)"><span>1</span><div><b>Flow = ΔP ÷ R</b> — volume change creates ΔP</div></div>
+      <div class="take" style="--c:var(--green)"><span>2</span><div><b>FRC</b> = lung recoil in ⇄ chest wall out</div></div>
+      <div class="take" style="--c:var(--cyan)"><span>3</span><div><b>Surfactant</b> stabilises small alveoli</div></div>
+      <div class="take" style="--c:var(--orange)"><span>4</span><div><b>Radius⁴</b> dominates airway resistance</div></div>
+      <div class="take" style="--c:var(--purple)"><span>5</span><div>Obstructive <b>↓ FEV₁/FVC</b> · Restrictive <b>↓ volumes</b></div></div>
+    </div>
+  </div>
+</section>
+
+<!-- 39 ─────────────── QUIZ -->
+<section class="slide s-quiz" data-id="quiz" data-title="Test yourself" data-section="Assessment" style="--glow:var(--green);--gx:70%;--gy:50%">
+  <div class="split">
+    <div class="rise">
+      <div class="eyebrow" style="--accent:var(--green)"><span class="dot"></span>Assessment</div>
+      <h2 class="title">Test yourself</h2>
+      <p class="subtitle">Exam-style MCQs on the whole chapter — instant feedback, explanations and a topic-by-topic score.</p>
+      <div class="row mt-m"><a class="btn" href="quiz/" target="_blank" rel="noopener">Open question bank</a><span class="chip" id="qz-count"><i style="--c:var(--green)"></i>Loading…</span></div>
+    </div>
+    <div class="visual center"><div class="qr-card card"><div id="qr"></div><div class="qr-cap">Scan to take the quiz</div></div></div>
+  </div>
+</section>
+
+<!-- 40 ─────────────── THANK YOU -->
+<section class="slide s-end" data-id="thanks" data-title="Thank you & references" data-section="References" data-src="44" style="--glow:var(--blue);--gx:72%;--gy:46%">
+  <div class="split">
+    <div class="rise">
+      <div class="eyebrow"><span class="dot"></span>References</div>
+      <h2 class="hero-title sm">Thank you</h2>
+      <div class="ref-list mt-m">
+        <div>Hall JE, Hall ME. <i>Guyton &amp; Hall Textbook of Medical Physiology</i>, 15th ed. — Pulmonary Ventilation, pp. 501–507</div>
+        <div>Ninja Nerd — <a href="https://youtu.be/uYm4l_alVV0" target="_blank" rel="noopener">youtu.be/uYm4l_alVV0</a></div>
+        <div>Lecturio Medical — <a href="https://youtu.be/TsGAfub2wxA" target="_blank" rel="noopener">youtu.be/TsGAfub2wxA</a></div>
+        <div>Dr Matt &amp; Dr Mike — <a href="https://youtu.be/RQb9GdJ7uQs" target="_blank" rel="noopener">youtu.be/RQb9GdJ7uQs</a></div>
+        <div class="c-dim3" id="extra-refs"></div>
+      </div>
+    </div>
+    <div class="visual"><div class="mount" id="end-mount"></div></div>
+  </div>
+</section>
+
+</div></div>
+
+<!-- HUD -->
+<div id="hud">
+  <div id="progress"></div>
+  <div class="hud-row">
+    <div class="hud-left"><span id="section-name"></span><span class="chip" id="src-chip" title="Show the original lecture slide (S)"></span></div>
+    <div class="hud-btns">
+      <span id="counter"></span>
+      <button class="hud-btn" id="btn-prev" title="Previous (←)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M15 5l-7 7 7 7"/></svg></button>
+      <button class="hud-btn" id="btn-next" title="Next (→)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M9 5l7 7-7 7"/></svg></button>
+      <button class="hud-btn" id="btn-grid" title="Overview (O)"><svg viewBox="0 0 24 24" fill="currentColor"><rect x="3" y="3" width="7" height="7" rx="2"/><rect x="14" y="3" width="7" height="7" rx="2"/><rect x="3" y="14" width="7" height="7" rx="2"/><rect x="14" y="14" width="7" height="7" rx="2"/></svg></button>
+      <button class="hud-btn" id="btn-theme" title="Light / dark (T)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="8"/><path d="M12 4a8 8 0 0 1 0 16z" fill="currentColor"/></svg></button>
+      <button class="hud-btn" id="btn-full" title="Fullscreen (F)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg></button>
+    </div>
+  </div>
+</div>
+<div id="popover" role="tooltip"></div>
+<div id="overview"><h3>All slides</h3><div class="ov-grid"></div></div>
+<div id="figmodal"><figure><img alt="Original lecture slide"><figcaption></figcaption></figure></div>
+<div id="laser"></div>
+<div id="help">
+  <h5>Presenter shortcuts</h5>
+  <table>
+    <tr><td><kbd>→</kbd> <kbd>Space</kbd></td><td>Next build / slide</td></tr>
+    <tr><td><kbd>←</kbd></td><td>Back</td></tr>
+    <tr><td><kbd>O</kbd> <kbd>Esc</kbd></td><td>Slide overview</td></tr>
+    <tr><td><kbd>F</kbd></td><td>Fullscreen</td></tr>
+    <tr><td><kbd>T</kbd></td><td>Light / dark theme</td></tr>
+    <tr><td><kbd>L</kbd></td><td>Laser pointer</td></tr>
+    <tr><td><kbd>S</kbd></td><td>Original lecture slide</td></tr>
+    <tr><td><kbd>Q</kbd></td><td>Open quiz</td></tr>
+    <tr><td><kbd>12</kbd> <kbd>Enter</kbd></td><td>Jump to slide 12</td></tr>
+    <tr><td>Hover <span class="more" style="width:1.4em;height:1.4em;margin:0"></span></td><td>More detail</td></tr>
+  </table>
+</div>
+<script type="module" src="js/main.js"></script>
+</body>
+</html>

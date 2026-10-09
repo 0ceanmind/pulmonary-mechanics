@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Pulmonary Mechanics Quiz</title>
+<meta name="description" content="Exam-style MCQs on pulmonary mechanics (Guyton & Hall 15e, pp. 501–507) with instant feedback, explanations and topic scores.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23000'/%3E%3Cpath d='M20 33l8 8 16-18' fill='none' stroke='%2330d158' stroke-width='6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300..800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="quiz.css">
+</head>
+<body>
+<header class="top">
+  <a class="brand" href="../" title="Back to the presentation">
+    <svg viewBox="0 0 32 32" aria-hidden="true"><path d="M16 4v9M16 13c-2 2-5 2-6.5 6-1.5 4.5 0 7.5 3 7.5 2.5 0 3.5-3 3.5-6M16 13c2 2 5 2 6.5 6 1.5 4.5 0 7.5-3 7.5-2.5 0-3.5-3-3.5-6" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg>
+    <span>Pulmonary Mechanics</span>
+  </a>
+  <div class="top-right">
+    <span class="pill hidden" id="timer"></span>
+    <button class="icon-btn" id="theme" title="Light / dark"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8" fill="none" stroke="currentColor" stroke-width="2"/><path d="M12 4a8 8 0 0 1 0 16z" fill="currentColor"/></svg></button>
+  </div>
+</header>
+
+<main id="app">
+  <!-- START -->
+  <section class="view" id="v-start">
+    <div class="hero">
+      <div class="eyebrow">Question bank</div>
+      <h1>Test your <span class="grad">pulmonary mechanics</span>.</h1>
+      <p class="lead">Exam-style single-best-answer questions covering every learning objective of the lecture.</p>
+      <div class="stats" id="stats"></div>
+    </div>
+
+    <div class="panel">
+      <h2>Choose a mode</h2>
+      <div class="modes" id="modes">
+        <button class="mode on" data-mode="practice"><b>Practice</b><span>Instant feedback &amp; explanation after every question</span></button>
+        <button class="mode" data-mode="exam"><b>Exam</b><span>Timed, no feedback until you finish — like the real paper</span></button>
+      </div>
+
+      <h2>How many questions?</h2>
+      <div class="seg" id="count">
+        <button data-n="10">10</button><button data-n="20" class="on">20</button><button data-n="40">40</button><button data-n="all">All</button>
+      </div>
+
+      <h2>Topics <button class="link" id="all-topics">Select all</button></h2>
+      <div class="topics" id="topics"></div>
+
+      <div class="row">
+        <label class="check"><input type="checkbox" id="weak"> <span>Focus on questions I got wrong before</span></label>
+      </div>
+      <button class="cta" id="start">Start quiz <svg viewBox="0 0 24 24"><path d="M9 5l7 7-7 7" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+      <p class="hint">Keyboard: <kbd>1</kbd>–<kbd>5</kbd> or <kbd>A</kbd>–<kbd>E</kbd> to answer · <kbd>Enter</kbd> next · <kbd>F</kbd> flag</p>
+    </div>
+
+    <details class="about">
+      <summary>About this question bank</summary>
+      <div id="about"></div>
+    </details>
+  </section>
+
+  <!-- QUESTION -->
+  <section class="view hidden" id="v-q">
+    <div class="qbar"><div class="qbar-fill" id="qbar"></div></div>
+    <div class="qhead">
+      <span class="qnum" id="qnum"></span>
+      <span class="pill" id="qtopic"></span>
+      <span class="pill lvl" id="qlevel"></span>
+      <button class="flag" id="flag" title="Flag for review (F)"><svg viewBox="0 0 24 24"><path d="M6 21V4h10l-1.5 4L16 12H6" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg></button>
+    </div>
+    <h2 class="stem" id="stem"></h2>
+    <div class="opts" id="opts"></div>
+    <div class="explain hidden" id="explain"></div>
+    <div class="qnav">
+      <button class="ghost" id="prev">Back</button>
+      <div class="dots" id="dots"></div>
+      <button class="cta sm" id="next">Next</button>
+    </div>
+  </section>
+
+  <!-- RESULTS -->
+  <section class="view hidden" id="v-res">
+    <div class="res-top">
+      <div class="ring"><svg viewBox="0 0 200 200"><circle cx="100" cy="100" r="86" class="ring-bg"/><circle cx="100" cy="100" r="86" class="ring-fg" id="ring"/></svg><div class="ring-txt"><b id="pct">0%</b><span id="frac"></span></div></div>
+      <div>
+        <div class="eyebrow" id="verdict-k">Result</div>
+        <h1 id="verdict"></h1>
+        <p class="lead" id="verdict-s"></p>
+        <div class="row gap">
+          <button class="cta" id="retry-wrong">Retry my mistakes</button>
+          <button class="ghost" id="restart">New quiz</button>
+        </div>
+      </div>
+    </div>
+    <div class="panel">
+      <h2>By topic</h2>
+      <div class="bars" id="bars"></div>
+    </div>
+    <div class="panel">
+      <h2>Review <span class="seg mini" id="rev-filter"><button data-f="wrong" class="on">Mistakes</button><button data-f="flag">Flagged</button><button data-f="all">All</button></span></h2>
+      <div class="review" id="review"></div>
+    </div>
+  </section>
+</main>
+<script type="module" src="quiz.js"></script>
+</body>
+</html>
